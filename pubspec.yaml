@@ -1,5 +1,5 @@
 name: libmuslim_dart
-description: "A new Dart FFI package project."
+description: "Dart FFI bindings for libmuslim: prayer times and other tools for Muslim applications."
 version: 0.0.1
 
 environment:
