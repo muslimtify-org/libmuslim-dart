@@ -25,11 +25,13 @@ The repository's only commits are the two spec commits; every source file is unt
 **Files:**
 - Modify: `.gitignore`, only if Step 1 finds a build output directory missing from it
 
-- [ ] Step 1: Run `cat .gitignore` and confirm build output directories are listed. If `.dart_tool/` is absent, append it.
-- [ ] Step 2: Run `dart pub get`
-- [ ] Step 3: Run `dart test` against the untouched template and record in the commit message the exact command that exited zero, including any flag it required. Every later task uses that recorded command wherever this plan writes `dart test`.
-- [ ] Step 4: Run `git add -A`
-- [ ] Step 5: Commit
+- [x] Step 1: Run `cat .gitignore` and confirm build output directories are listed. If `.dart_tool/` is absent, append it.
+- [x] Step 2: Run `dart pub get`
+- [x] Step 3: Run `dart test` against the untouched template and record in the commit message the exact command that exited zero, including any flag it required. Every later task uses that recorded command wherever this plan writes `dart test`.
+- [x] Step 4: Run `git add -A`
+- [x] Step 5: Commit
+
+**Result:** `a429198`. The recorded invocation is plain `dart test`, no flag required on Dart 3.12.2.
 
 ---
 
