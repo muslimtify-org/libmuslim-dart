@@ -1,0 +1,20 @@
+# Run with `dart run ffigen --config ffigen/prayertimes.yaml`.
+name: PrayertimesBindings
+description: |
+  Raw bindings for `src/prayertimes.h`.
+
+  Regenerate with `dart run ffigen --config ffigen/prayertimes.yaml`.
+output: '../lib/src/prayertimes/prayertimes_bindings_generated.dart'
+headers:
+  entry-points:
+    - '../src/prayertimes.h'
+  include-directives:
+    - '../src/prayertimes.h'
+ffi-native:
+  # Must equal `package:<packageName>/<assetName>` from hook/build.dart.
+  # Without it, @Native resolves against this file's own package URI, which
+  # no build hook produces.
+  asset-id: 'package:libmuslim_dart/libmuslim_dart_bindings_generated.dart'
+comments:
+  style: any
+  length: full
