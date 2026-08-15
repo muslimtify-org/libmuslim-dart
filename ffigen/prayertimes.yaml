@@ -1,4 +1,6 @@
-# Run with `dart run ffigen --config ffigen/prayertimes.yaml`.
+# Regenerate with `dart run tool/regen.dart`, which runs every config in this
+# directory. Invoking ffigen directly works only if CPATH already points at
+# clang's resource include directory; tool/regen.dart sets that for you.
 name: PrayertimesBindings
 description: |
   Raw bindings for `src/prayertimes.h`.
