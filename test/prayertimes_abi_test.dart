@@ -5,6 +5,11 @@ import 'package:test/test.dart';
 
 import 'package:libmuslim_dart/prayertimes.dart';
 
+// The `@Native` declarations below must be spelled exactly as the C symbols
+// they bind, so lowerCamelCase is not available to them. ffigen's own generated
+// bindings suppress the same rule for the same reason.
+// ignore_for_file: non_constant_identifier_names
+
 const _assetId = 'package:libmuslim_dart/libmuslim_dart_bindings_generated.dart';
 
 @Native<Size Function()>(assetId: _assetId)

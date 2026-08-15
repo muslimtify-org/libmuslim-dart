@@ -3,6 +3,10 @@ import 'package:logging/logging.dart';
 import 'package:hooks/hooks.dart';
 import 'package:code_assets/code_assets.dart';
 
+// A build hook's stdout IS its log: `dart build` and `flutter build` surface
+// what it prints. Routing this through a logging package would hide it.
+// ignore_for_file: avoid_print
+
 void main(List<String> args) async {
   await build(args, (input, output) async {
     final packageName = input.packageName;
