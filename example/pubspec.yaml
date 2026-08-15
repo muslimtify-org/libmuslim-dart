@@ -31,6 +31,8 @@ dependencies:
   flutter:
     sdk: flutter
 
+  ffi: ^2.1.4
+
   libmuslim_dart:
     # When depending on this package from a real application you should use:
     #   libmuslim_dart: ^x.y.z

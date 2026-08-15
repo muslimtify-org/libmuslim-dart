@@ -1,10 +1,51 @@
-import 'package:flutter/material.dart';
-import 'dart:async';
+import 'dart:ffi';
 
-import 'package:libmuslim_dart/libmuslim_dart.dart' as libmuslim_dart;
+import 'package:ffi/ffi.dart';
+import 'package:flutter/material.dart';
+import 'package:libmuslim_dart/prayertimes.dart';
 
 void main() {
   runApp(const MyApp());
+}
+
+/// Formats one decimal-hours time through the C formatter.
+String _hm(double hours) {
+  final buf = calloc<Char>(16);
+  try {
+    format_time_hm(hours, buf, 16);
+    return buf.cast<Utf8>().toDartString();
+  } finally {
+    calloc.free(buf);
+  }
+}
+
+/// Jakarta, using the Kemenag method, for today.
+Map<String, String> _jakartaToday() {
+  final key = 'kemenag'.toNativeUtf8();
+  try {
+    final params = method_params_get(method_from_string(key.cast<Char>()));
+    final now = DateTime.now();
+    final t = calculate_prayer_times(
+      now.year,
+      now.month,
+      now.day,
+      -6.2851291,
+      106.9814968,
+      7.0,
+      params,
+    );
+    return {
+      'Fajr': _hm(t.fajr),
+      'Sunrise': _hm(t.sunrise),
+      'Dhuha': _hm(t.dhuha),
+      'Dhuhr': _hm(t.dhuhr),
+      'Asr': _hm(t.asr),
+      'Maghrib': _hm(t.maghrib),
+      'Isha': _hm(t.isha),
+    };
+  } finally {
+    malloc.free(key);
+  }
 }
 
 class MyApp extends StatefulWidget {
@@ -15,54 +56,33 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late int sumResult;
-  late Future<int> sumAsyncResult;
+  late Map<String, String> times;
 
   @override
   void initState() {
     super.initState();
-    sumResult = libmuslim_dart.sum(1, 2);
-    sumAsyncResult = libmuslim_dart.sumAsync(3, 4);
+    times = _jakartaToday();
   }
 
   @override
   Widget build(BuildContext context) {
     const textStyle = TextStyle(fontSize: 25);
-    const spacerSmall = SizedBox(height: 10);
     return MaterialApp(
       home: Scaffold(
-        appBar: AppBar(title: const Text('Native Packages')),
+        appBar: AppBar(title: const Text('libmuslim prayer times')),
         body: SingleChildScrollView(
           child: Container(
-            padding: const .all(10),
+            padding: const EdgeInsets.all(10),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  'This calls a native function through FFI that is shipped as source in the package. '
-                  'The native code is built as part of the Flutter Runner build.',
+                  'Jakarta, Kemenag method, calculated in C through FFI.',
                   style: textStyle,
-                  textAlign: .center,
                 ),
-                spacerSmall,
-                Text(
-                  'sum(1, 2) = $sumResult',
-                  style: textStyle,
-                  textAlign: .center,
-                ),
-                spacerSmall,
-                FutureBuilder<int>(
-                  future: sumAsyncResult,
-                  builder: (BuildContext context, AsyncSnapshot<int> value) {
-                    final displayValue = (value.hasData)
-                        ? value.data
-                        : 'loading';
-                    return Text(
-                      'await sumAsync(3, 4) = $displayValue',
-                      style: textStyle,
-                      textAlign: .center,
-                    );
-                  },
-                ),
+                const SizedBox(height: 10),
+                for (final entry in times.entries)
+                  Text('${entry.key}: ${entry.value}', style: textStyle),
               ],
             ),
           ),
