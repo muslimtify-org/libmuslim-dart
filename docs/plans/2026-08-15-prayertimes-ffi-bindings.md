@@ -278,7 +278,7 @@ The enum values need no Dart assertion: `_Static_assert` in `src/abi_probe.c` fa
 - Create: `test/prayertimes_abi_test.dart`
 - Modify: `pubspec.yaml` only if `dart analyze` reports `ffi` as an undeclared dependency for a test file; it is currently a dev-dependency at version 2.2.0, which covers test-only use
 
-- [ ] Step 1: Create `test/prayertimes_abi_test.dart`. The probe functions are not in `prayertimes.h`, so ffigen did not bind them; they are declared here with `@Native` carrying the same `assetId` as the generated file:
+- [x] Step 1: Create `test/prayertimes_abi_test.dart`. The probe functions are not in `prayertimes.h`, so ffigen did not bind them; they are declared here with `@Native` carrying the same `assetId` as the generated file:
 ```dart
 import 'dart:ffi';
 
@@ -443,10 +443,14 @@ void main() {
 }
 ```
 
-- [ ] Step 2: Run `dart test test/prayertimes_abi_test.dart`
-- [ ] Step 3: If `dart analyze` reports that the constants ffigen emitted carry different identifiers than the header's macro names, correct the `header constants` group to the identifiers present in `lib/src/prayertimes/prayertimes_bindings_generated.dart` and rerun Step 2
-- [ ] Step 4: Run `dart analyze`
-- [ ] Step 5: Commit
+- [x] Step 2: Run `dart test test/prayertimes_abi_test.dart`
+- [x] Step 3: If `dart analyze` reports that the constants ffigen emitted carry different identifiers than the header's macro names, correct the `header constants` group to the identifiers present in `lib/src/prayertimes/prayertimes_bindings_generated.dart` and rerun Step 2
+- [x] Step 4: Run `dart analyze`
+- [x] Step 5: Commit
+
+**Result:** `b55db20`. Clause passed: `dart test test/prayertimes_abi_test.dart` exit 0, 10 tests. The sentinel round-trip confirms every field of both structs lands at the offset and width the compiled C uses. No deviation from the brief; Step 3's fallback was checked and not needed, and `pubspec.yaml` needed no change because the `ffi` dev-dependency already covers `test/`.
+
+`dart analyze` exits 0 with 19 info-level `non_constant_identifier_names` lints, from the snake_case `@Native` declarations that must match C symbol names exactly. Cosmetic; silencing them is a follow-up, not this cycle.
 
 ---
 
