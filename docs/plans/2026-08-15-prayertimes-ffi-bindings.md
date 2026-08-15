@@ -463,7 +463,7 @@ The method is selected via `method_from_string('kemenag')` rather than a `CALC_K
 **Files:**
 - Create: `test/prayertimes_test.dart`
 
-- [ ] Step 1: Create `test/prayertimes_test.dart`. The inputs and the expected `04:05` are the worked example in `~/Projects/libmuslim/README.md`:
+- [x] Step 1: Create `test/prayertimes_test.dart`. The inputs and the expected `04:05` are the worked example in `~/Projects/libmuslim/README.md`:
 ```dart
 import 'dart:ffi';
 
@@ -500,9 +500,11 @@ void main() {
 }
 ```
 
-- [ ] Step 2: Run `dart test test/prayertimes_test.dart`
-- [ ] Step 3: Run `dart analyze`
-- [ ] Step 4: Commit
+- [x] Step 2: Run `dart test test/prayertimes_test.dart`
+- [x] Step 3: Run `dart analyze`
+- [x] Step 4: Commit
+
+**Result:** `0e19012`. Clause passed: `dart test test/prayertimes_test.dart` exit 0, 1 test, Fajr matched `04:05` exactly against the upstream worked example. Struct-by-value return across the FFI boundary is confirmed correct — the one thing Task 4 could not check, since it only passes structs by pointer. No deviation.
 
 ---
 
@@ -536,10 +538,11 @@ export 'prayertimes.dart';
 
 - [ ] Step 2: Run `git rm src/libmuslim_dart.c src/libmuslim_dart.h lib/libmuslim_dart_bindings_generated.dart test/libmuslim_dart_test.dart ffigen.yaml`
 - [ ] Step 3: In `hook/build.dart`, change the `sources` list to `['src/prayertimes.c', 'src/abi_probe.c']`
-- [ ] Step 4: Run `dart analyze`
-- [ ] Step 5: Run `dart test`
-- [ ] Step 6: Run `git grep -c sum_long_running`
-- [ ] Step 7: Commit
+- [ ] Step 4: In `hook/build.dart`, change `std: 'gnu11'` back to `std: 'c11'`. **Amendment, added after Task 2 reported its deviation.** Task 2 had to relax the baseline to `gnu11` because the template's `src/libmuslim_dart.c` calls `usleep`, which strict `-std=c11` hides. Step 2 of this task deletes that file, so the only remaining translation units are `src/prayertimes.c` and `src/abi_probe.c`, both of which the upstream project builds under strict C11. Restoring it keeps the vendored header honest about the portability it advertises. If the build fails under `c11` after the deletion, that is a real finding about `prayertimes.h`, not a reason to revert to `gnu11` — report it.
+- [ ] Step 5: Run `dart analyze`
+- [ ] Step 6: Run `dart test`
+- [ ] Step 7: Run `git grep -c sum_long_running`
+- [ ] Step 8: Commit
 
 ---
 
