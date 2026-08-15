@@ -44,13 +44,13 @@ Adds the implementation TU and the probe alongside the existing template. Nothin
 - Create: `src/abi_probe.c`
 - Modify: `hook/build.dart:8-12`
 
-- [ ] Step 1: Create `src/prayertimes.c`:
+- [x] Step 1: Create `src/prayertimes.c`:
 ```c
 #define PRAYERTIMES_IMPLEMENTATION
 #include "prayertimes.h"
 ```
 
-- [ ] Step 2: Create `src/abi_probe.c`. The `_Static_assert` block and the `abi_constant_*` and `abi_*_civil*` functions are ported from `~/Projects/libmuslim-rs/include/abi_probe.c`. The `abi_fill_*` functions replace that file's `offsetof`/`_Alignof` exports, because `dart:ffi` exposes `sizeOf<T>()` but no `offsetOf` and no `alignOf`.
+- [x] Step 2: Create `src/abi_probe.c`. The `_Static_assert` block and the `abi_constant_*` and `abi_*_civil*` functions are ported from `~/Projects/libmuslim-rs/include/abi_probe.c`. The `abi_fill_*` functions replace that file's `offsetof`/`_Alignof` exports, because `dart:ffi` exposes `sizeOf<T>()` but no `offsetOf` and no `alignOf`.
 ```c
 #include <stddef.h>
 #include "prayertimes.h"
@@ -141,7 +141,7 @@ void abi_civil_from_days(long days, int *y, int *m, int *d) {
 }
 ```
 
-- [ ] Step 3: Replace the `CBuilder.library` call in `hook/build.dart` so it compiles an explicit source list, pins C11 for `_Static_assert`, and links libm off Windows. `assetName` keeps its current value because it is the library's identity, matched by every ffigen `asset-id`:
+- [x] Step 3: Replace the `CBuilder.library` call in `hook/build.dart` so it compiles an explicit source list, pins C11 for `_Static_assert`, and links libm off Windows. `assetName` keeps its current value because it is the library's identity, matched by every ffigen `asset-id`:
 ```dart
 import 'package:native_toolchain_c/native_toolchain_c.dart';
 import 'package:logging/logging.dart';
@@ -173,10 +173,14 @@ void main(List<String> args) async {
 }
 ```
 
-- [ ] Step 4: Run `dart pub get`
-- [ ] Step 5: Run `dart test`
-- [ ] Step 6: Locate the built shared object under `.dart_tool/` and run `nm -D` on it, filtering for `calculate_prayer_times`
-- [ ] Step 7: Commit
+- [x] Step 4: Run `dart pub get`
+- [x] Step 5: Run `dart test`
+- [x] Step 6: Locate the built shared object under `.dart_tool/` and run `nm -D` on it, filtering for `calculate_prayer_times`
+- [x] Step 7: Commit
+
+**Result:** `bd4c133`. Clause passed: `dart test` exit 0, `nm -D .dart_tool/lib/liblibmuslim_dart.so` matched `T calculate_prayer_times`, and 19 `abi_*` symbols are exported.
+
+**Deviation from Step 3:** the implementer used `std: 'gnu11'`, not `'c11'`. Under strict `-std=c11` clang hides the POSIX visibility macros that declare `usleep`, which the template's `src/libmuslim_dart.c` calls, so the build failed with `call to undeclared function 'usleep'`. `gnu11` still provides `_Static_assert`, which is the only reason Step 3 pins a C11 baseline. The template file that forced this is deleted in Task 6, so `std` is revisited there.
 
 ---
 
