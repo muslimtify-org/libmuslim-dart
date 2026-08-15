@@ -561,7 +561,7 @@ Step 4's amendment held: the C build succeeds under strict `std: 'c11'` once `sr
 **Files:**
 - Modify: `example/lib/main.dart` — replace the whole file, currently 73 lines
 
-- [ ] Step 1: Replace the entire contents of `example/lib/main.dart`:
+- [x] Step 1: Replace the entire contents of `example/lib/main.dart`:
 ```dart
 import 'dart:ffi';
 
@@ -658,6 +658,12 @@ class _MyAppState extends State<MyApp> {
 }
 ```
 
-- [ ] Step 2: Run `flutter pub get` inside `example/`
-- [ ] Step 3: Run `dart analyze` inside `example/`
-- [ ] Step 4: Commit
+- [x] Step 2: Run `flutter pub get` inside `example/`
+- [x] Step 3: Run `dart analyze` inside `example/`
+- [x] Step 4: Commit
+
+**Result:** `de539ba`. Clause passed: `dart analyze` inside `example/` exit 0, and `dart analyze` at the repository root is back to exit 0 for the first time since Task 6.
+
+**Authorised scope extension.** The Files block named only `example/lib/main.dart`, but `example/` is a separate package and did not depend on `ffi`, which the replacement needs for `calloc`, `malloc` and `toNativeUtf8`. `example/pubspec.yaml` gained `ffi: ^2.1.4` and `example/pubspec.lock` followed. This was pre-authorised in the dispatch rather than taken by the implementer.
+
+**Out-of-scope finding, not fixed.** `flutter pub get` generated seven plugin-registrant files under `example/linux`, `example/macos` and `example/windows` that no `.gitignore` covers, so the working tree is no longer clean. They are Flutter build artifacts, not source. Carried to `verify` alongside the `README.md` reference.
