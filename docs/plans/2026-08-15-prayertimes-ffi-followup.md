@@ -156,7 +156,7 @@ Observed stale points, all read from the files: `README.md:3` package descriptio
 - Modify: `README.md` — replace everything from the top through the `## Invoking native code` section, keeping the `## Flutter help` section and anything after it unchanged
 - Modify: `pubspec.yaml` — the `description` field
 
-- [ ] Step 1: In `README.md`, replace everything above the `## Flutter help` heading with the content between the four-backtick fences below. The inner triple-backtick fences are part of the README content and must be written into the file as-is:
+- [x] Step 1: In `README.md`, replace everything above the `## Flutter help` heading with the content between the four-backtick fences below. The inner triple-backtick fences are part of the README content and must be written into the file as-is:
 
 ````markdown
 # libmuslim_dart
@@ -235,7 +235,9 @@ cd example && flutter test
 ```
 ````
 
-- [ ] Step 2: In `pubspec.yaml`, replace the `description` field value `"A new Dart FFI package project."` with `"Dart FFI bindings for libmuslim: prayer times and other tools for Muslim applications."`
-- [ ] Step 3: Run `dart pub get`
-- [ ] Step 4: Run `dart analyze`
-- [ ] Step 5: Commit
+- [x] Step 2: In `pubspec.yaml`, replace the `description` field value `"A new Dart FFI package project."` with `"Dart FFI bindings for libmuslim: prayer times and other tools for Muslim applications."`
+- [x] Step 3: Run `dart pub get`
+- [x] Step 4: Run `dart analyze`
+- [x] Step 5: Commit
+
+**Result:** `07200ef`. Clause passed, re-run independently: the grep reports no match (exit 1), `dart analyze` exit 0, the `## Flutter help` section is preserved at line 76, no stray four-backtick fence leaked into the file, and `pubspec.yaml` name and version are unchanged. Scope was exactly the two planned files.
