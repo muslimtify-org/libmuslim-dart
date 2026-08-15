@@ -25,7 +25,7 @@ Looping over `ffigen/*.yaml` rather than naming one config is what keeps spec Go
 - Create: `tool/regen.dart`
 - Modify: `ffigen/prayertimes.yaml` — the `Run with` comment on its first line
 
-- [ ] Step 1: Create `tool/regen.dart`:
+- [x] Step 1: Create `tool/regen.dart`:
 ```dart
 import 'dart:io';
 
@@ -84,16 +84,18 @@ Future<void> main() async {
 }
 ```
 
-- [ ] Step 2: In `ffigen/prayertimes.yaml`, replace the first-line comment `# Run with \`dart run ffigen --config ffigen/prayertimes.yaml\`.` with:
+- [x] Step 2: In `ffigen/prayertimes.yaml`, replace the first-line comment `# Run with \`dart run ffigen --config ffigen/prayertimes.yaml\`.` with:
 ```yaml
 # Regenerate with `dart run tool/regen.dart`, which runs every config in this
 # directory. Invoking ffigen directly works only if CPATH already points at
 # clang's resource include directory; tool/regen.dart sets that for you.
 ```
 
-- [ ] Step 3: Run `dart run tool/regen.dart` in a shell with no `CPATH` set
-- [ ] Step 4: Run `git diff --exit-code lib/src/`
-- [ ] Step 5: Commit
+- [x] Step 3: Run `dart run tool/regen.dart` in a shell with no `CPATH` set
+- [x] Step 4: Run `git diff --exit-code lib/src/`
+- [x] Step 5: Commit
+
+**Result:** `f731569`. Clause passed, re-run independently with `env -u CPATH`: `dart run tool/regen.dart` exit 0, `git diff --exit-code lib/src/` exit 0 (no drift). Spec Goal 3 now has a runnable command. No deviation.
 
 ---
 
