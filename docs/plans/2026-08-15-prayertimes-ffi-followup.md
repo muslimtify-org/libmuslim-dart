@@ -110,7 +110,7 @@ The open question this task answers by running: whether `flutter test` builds th
 **Files:**
 - Create: `example/test/widget_test.dart`
 
-- [ ] Step 1: Create `example/test/widget_test.dart`:
+- [x] Step 1: Create `example/test/widget_test.dart`:
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -138,9 +138,11 @@ void main() {
 }
 ```
 
-- [ ] Step 2: Run `flutter pub get` inside `example/`
-- [ ] Step 3: Run `flutter test` inside `example/`
-- [ ] Step 4: Commit
+- [x] Step 2: Run `flutter pub get` inside `example/`
+- [x] Step 3: Run `flutter test` inside `example/`
+- [x] Step 4: Commit
+
+**Result:** `eea341c`. Clause passed, re-run independently: `flutter test` in `example/` exit 0, 1 test. The open question is answered — `flutter test` does build the native asset from `hook/build.dart`, so the widget test exercises the real library. Assertion intact: it pumps the real `MyApp` and requires seven rendered `HH:MM` rows, with no stub or mock. Spec Goal 7's display half is now measured rather than inferred.
 
 ---
 
