@@ -25,11 +25,13 @@ The repository's only commits are the two spec commits; every source file is unt
 **Files:**
 - Modify: `.gitignore`, only if Step 1 finds a build output directory missing from it
 
-- [ ] Step 1: Run `cat .gitignore` and confirm build output directories are listed. If `.dart_tool/` is absent, append it.
-- [ ] Step 2: Run `dart pub get`
-- [ ] Step 3: Run `dart test` against the untouched template and record in the commit message the exact command that exited zero, including any flag it required. Every later task uses that recorded command wherever this plan writes `dart test`.
-- [ ] Step 4: Run `git add -A`
-- [ ] Step 5: Commit
+- [x] Step 1: Run `cat .gitignore` and confirm build output directories are listed. If `.dart_tool/` is absent, append it.
+- [x] Step 2: Run `dart pub get`
+- [x] Step 3: Run `dart test` against the untouched template and record in the commit message the exact command that exited zero, including any flag it required. Every later task uses that recorded command wherever this plan writes `dart test`.
+- [x] Step 4: Run `git add -A`
+- [x] Step 5: Commit
+
+**Result:** `a429198`. The recorded invocation is plain `dart test`, no flag required on Dart 3.12.2.
 
 ---
 
@@ -42,13 +44,13 @@ Adds the implementation TU and the probe alongside the existing template. Nothin
 - Create: `src/abi_probe.c`
 - Modify: `hook/build.dart:8-12`
 
-- [ ] Step 1: Create `src/prayertimes.c`:
+- [x] Step 1: Create `src/prayertimes.c`:
 ```c
 #define PRAYERTIMES_IMPLEMENTATION
 #include "prayertimes.h"
 ```
 
-- [ ] Step 2: Create `src/abi_probe.c`. The `_Static_assert` block and the `abi_constant_*` and `abi_*_civil*` functions are ported from `~/Projects/libmuslim-rs/include/abi_probe.c`. The `abi_fill_*` functions replace that file's `offsetof`/`_Alignof` exports, because `dart:ffi` exposes `sizeOf<T>()` but no `offsetOf` and no `alignOf`.
+- [x] Step 2: Create `src/abi_probe.c`. The `_Static_assert` block and the `abi_constant_*` and `abi_*_civil*` functions are ported from `~/Projects/libmuslim-rs/include/abi_probe.c`. The `abi_fill_*` functions replace that file's `offsetof`/`_Alignof` exports, because `dart:ffi` exposes `sizeOf<T>()` but no `offsetOf` and no `alignOf`.
 ```c
 #include <stddef.h>
 #include "prayertimes.h"
@@ -139,7 +141,7 @@ void abi_civil_from_days(long days, int *y, int *m, int *d) {
 }
 ```
 
-- [ ] Step 3: Replace the `CBuilder.library` call in `hook/build.dart` so it compiles an explicit source list, pins C11 for `_Static_assert`, and links libm off Windows. `assetName` keeps its current value because it is the library's identity, matched by every ffigen `asset-id`:
+- [x] Step 3: Replace the `CBuilder.library` call in `hook/build.dart` so it compiles an explicit source list, pins C11 for `_Static_assert`, and links libm off Windows. `assetName` keeps its current value because it is the library's identity, matched by every ffigen `asset-id`:
 ```dart
 import 'package:native_toolchain_c/native_toolchain_c.dart';
 import 'package:logging/logging.dart';
@@ -171,10 +173,14 @@ void main(List<String> args) async {
 }
 ```
 
-- [ ] Step 4: Run `dart pub get`
-- [ ] Step 5: Run `dart test`
-- [ ] Step 6: Locate the built shared object under `.dart_tool/` and run `nm -D` on it, filtering for `calculate_prayer_times`
-- [ ] Step 7: Commit
+- [x] Step 4: Run `dart pub get`
+- [x] Step 5: Run `dart test`
+- [x] Step 6: Locate the built shared object under `.dart_tool/` and run `nm -D` on it, filtering for `calculate_prayer_times`
+- [x] Step 7: Commit
+
+**Result:** `bd4c133`. Clause passed: `dart test` exit 0, `nm -D .dart_tool/lib/liblibmuslim_dart.so` matched `T calculate_prayer_times`, and 19 `abi_*` symbols are exported.
+
+**Deviation from Step 3:** the implementer used `std: 'gnu11'`, not `'c11'`. Under strict `-std=c11` clang hides the POSIX visibility macros that declare `usleep`, which the template's `src/libmuslim_dart.c` calls, so the build failed with `call to undeclared function 'usleep'`. `gnu11` still provides `_Static_assert`, which is the only reason Step 3 pins a C11 baseline. The template file that forced this is deleted in Task 6, so `std` is revisited there.
 
 ---
 
@@ -189,7 +195,7 @@ Establishes the layout every later module inherits, and is the task that satisfi
 - Create: `lib/src/prayertimes/prayertimes_bindings_generated.dart` (by running ffigen, not by hand)
 - Create: `lib/prayertimes.dart`
 
-- [ ] Step 1: Create `ffigen/prayertimes.yaml`:
+- [x] Step 1: Create `ffigen/prayertimes.yaml`:
 ```yaml
 # Run with `dart run ffigen --config ffigen/prayertimes.yaml`.
 name: PrayertimesBindings
@@ -213,9 +219,9 @@ comments:
   length: full
 ```
 
-- [ ] Step 2: Run `dart run ffigen --config ffigen/prayertimes.yaml`
+- [x] Step 2: Run `dart run ffigen --config ffigen/prayertimes.yaml`
 
-- [ ] Step 3: Create `lib/prayertimes.dart`, the module's public entry point. Today it only re-exports the generated bindings; the idiomatic Dart API is built here in a later cycle. Its doc comment is where the boundary's ownership and failure rules live, so they are not rediscovered by whoever writes that API:
+- [x] Step 3: Create `lib/prayertimes.dart`, the module's public entry point. Today it only re-exports the generated bindings; the idiomatic Dart API is built here in a later cycle. Its doc comment is where the boundary's ownership and failure rules live, so they are not rediscovered by whoever writes that API:
 ```dart
 /// Raw FFI bindings for `prayertimes.h`.
 ///
@@ -249,10 +255,18 @@ library;
 export 'src/prayertimes/prayertimes_bindings_generated.dart';
 ```
 
-- [ ] Step 4: Run `dart analyze`
-- [ ] Step 5: Run `grep -c "class MethodParams" lib/src/prayertimes/prayertimes_bindings_generated.dart` and `grep -c "class PrayerTimes" lib/src/prayertimes/prayertimes_bindings_generated.dart`
-- [ ] Step 6: Run `dart run ffigen --config ffigen/prayertimes.yaml && git diff --exit-code lib/src/` to confirm regeneration is idempotent against the committed file. Run it after staging, so the diff has something to compare against.
-- [ ] Step 7: Commit
+- [x] Step 4: Run `dart analyze`
+- [x] Step 5: Run `grep -c "class MethodParams" lib/src/prayertimes/prayertimes_bindings_generated.dart` and `grep -c "class PrayerTimes" lib/src/prayertimes/prayertimes_bindings_generated.dart`
+- [x] Step 6: Run `dart run ffigen --config ffigen/prayertimes.yaml && git diff --exit-code lib/src/` to confirm regeneration is idempotent against the committed file. Run it after staging, so the diff has something to compare against.
+- [x] Step 7: Commit
+
+**Result:** `95bb8a6`. Clause passed: `dart analyze` exit 0, one `class MethodParams` and one `class PrayerTimes` in the generated file, all 6 public functions bound, regeneration idempotent.
+
+**Deviation from Step 1 — relative paths.** ffigen 20.1.1 resolves `headers.entry-points` and `output` against the config file's own directory, not the invocation cwd. With the config at `ffigen/prayertimes.yaml`, the literal paths resolved to `ffigen/src/prayertimes.h` (missing, producing a silently empty 4-line binding file) and `ffigen/lib/src/…`. Both are prefixed with `../` in the committed config. Any future module config must do the same.
+
+**Environment requirement, not encoded anywhere.** Regeneration on this machine needs `CPATH=/usr/lib/clang/22/include` set for the ffigen invocation; without it libclang fails on `stddef.h: file not found` from `/usr/include/string.h`. This reproduces with the old root `ffigen.yaml` too, so it predates this work. It affects the spec's regenerate-and-diff check (Goal 3), which will fail for the wrong reason on a machine where this is unset. Recorded, not fixed — belongs to a follow-up, not this cycle.
+
+**Identifiers ffigen emitted**, confirming Task 4's fallback step is unnecessary: enum members keep their C names (`CalcMethod.CALC_KEMENAG`), and the header's `#define`d doubles become top-level `const double` with their C names (`DHUHA_ALTITUDE`, `DEG_TO_RAD`, …). `mt_days_from_civil` and `mt_civil_from_days` were skipped with a warning, as expected for `static inline` — which is exactly why `src/abi_probe.c` wraps them.
 
 ---
 
@@ -264,7 +278,7 @@ The enum values need no Dart assertion: `_Static_assert` in `src/abi_probe.c` fa
 - Create: `test/prayertimes_abi_test.dart`
 - Modify: `pubspec.yaml` only if `dart analyze` reports `ffi` as an undeclared dependency for a test file; it is currently a dev-dependency at version 2.2.0, which covers test-only use
 
-- [ ] Step 1: Create `test/prayertimes_abi_test.dart`. The probe functions are not in `prayertimes.h`, so ffigen did not bind them; they are declared here with `@Native` carrying the same `assetId` as the generated file:
+- [x] Step 1: Create `test/prayertimes_abi_test.dart`. The probe functions are not in `prayertimes.h`, so ffigen did not bind them; they are declared here with `@Native` carrying the same `assetId` as the generated file:
 ```dart
 import 'dart:ffi';
 
@@ -429,10 +443,14 @@ void main() {
 }
 ```
 
-- [ ] Step 2: Run `dart test test/prayertimes_abi_test.dart`
-- [ ] Step 3: If `dart analyze` reports that the constants ffigen emitted carry different identifiers than the header's macro names, correct the `header constants` group to the identifiers present in `lib/src/prayertimes/prayertimes_bindings_generated.dart` and rerun Step 2
-- [ ] Step 4: Run `dart analyze`
-- [ ] Step 5: Commit
+- [x] Step 2: Run `dart test test/prayertimes_abi_test.dart`
+- [x] Step 3: If `dart analyze` reports that the constants ffigen emitted carry different identifiers than the header's macro names, correct the `header constants` group to the identifiers present in `lib/src/prayertimes/prayertimes_bindings_generated.dart` and rerun Step 2
+- [x] Step 4: Run `dart analyze`
+- [x] Step 5: Commit
+
+**Result:** `b55db20`. Clause passed: `dart test test/prayertimes_abi_test.dart` exit 0, 10 tests. The sentinel round-trip confirms every field of both structs lands at the offset and width the compiled C uses. No deviation from the brief; Step 3's fallback was checked and not needed, and `pubspec.yaml` needed no change because the `ffi` dev-dependency already covers `test/`.
+
+`dart analyze` exits 0 with 19 info-level `non_constant_identifier_names` lints, from the snake_case `@Native` declarations that must match C symbol names exactly. Cosmetic; silencing them is a follow-up, not this cycle.
 
 ---
 
@@ -445,7 +463,7 @@ The method is selected via `method_from_string('kemenag')` rather than a `CALC_K
 **Files:**
 - Create: `test/prayertimes_test.dart`
 
-- [ ] Step 1: Create `test/prayertimes_test.dart`. The inputs and the expected `04:05` are the worked example in `~/Projects/libmuslim/README.md`:
+- [x] Step 1: Create `test/prayertimes_test.dart`. The inputs and the expected `04:05` are the worked example in `~/Projects/libmuslim/README.md`:
 ```dart
 import 'dart:ffi';
 
@@ -482,15 +500,19 @@ void main() {
 }
 ```
 
-- [ ] Step 2: Run `dart test test/prayertimes_test.dart`
-- [ ] Step 3: Run `dart analyze`
-- [ ] Step 4: Commit
+- [x] Step 2: Run `dart test test/prayertimes_test.dart`
+- [x] Step 3: Run `dart analyze`
+- [x] Step 4: Commit
+
+**Result:** `0e19012`. Clause passed: `dart test test/prayertimes_test.dart` exit 0, 1 test, Fajr matched `04:05` exactly against the upstream worked example. Struct-by-value return across the FFI boundary is confirmed correct — the one thing Task 4 could not check, since it only passes structs by pointer. No deviation.
 
 ---
 
-### Task 6: Remove the template → verify: `dart test` exits zero, `dart analyze` exits zero, and `git grep -c sum_long_running` reports no match
+### Task 6: Remove the template → verify: `dart test` exits zero, `dart analyze lib test hook` exits zero, and `git grep -c sum_long_running -- ':!docs'` reports no match
 
 Everything the prayertimes module needs already exists after Task 5. This task removes the scaffold it was built alongside, and is the last point at which the package still contains code that will never be supported.
+
+**Clause amended after the task ran.** The original read `dart analyze` and `git grep -c sum_long_running`, and both were unsatisfiable by this task through no fault of the implementation. `dart analyze` at the package root descends into `example/`, which this task knowingly breaks and Task 7 repairs, so Task 6 could never make it exit zero — a violation of the rule that a clause must be satisfiable by the task it belongs to. `git grep` without a pathspec searches this plan and its spec, both of which quote `sum_long_running` in prose. The amended clause checks the same two properties against the code alone: no scaffold symbol survives anywhere outside `docs/`, and everything this package actually ships analyzes clean. It is not weaker — `dart analyze lib test hook` covers every Dart file the package owns.
 
 **Files:**
 - Modify: `lib/libmuslim_dart.dart` — replace the whole file, currently the `sum`/`sumAsync` scaffold
@@ -501,7 +523,7 @@ Everything the prayertimes module needs already exists after Task 5. This task r
 - Delete: `test/libmuslim_dart_test.dart`
 - Delete: `ffigen.yaml` — superseded by `ffigen/prayertimes.yaml`
 
-- [ ] Step 1: Replace the entire contents of `lib/libmuslim_dart.dart`:
+- [x] Step 1: Replace the entire contents of `lib/libmuslim_dart.dart`:
 ```dart
 /// libmuslim for Dart: bindings to the libmuslim collection of single-header
 /// C libraries.
@@ -516,12 +538,19 @@ library;
 export 'prayertimes.dart';
 ```
 
-- [ ] Step 2: Run `git rm src/libmuslim_dart.c src/libmuslim_dart.h lib/libmuslim_dart_bindings_generated.dart test/libmuslim_dart_test.dart ffigen.yaml`
-- [ ] Step 3: In `hook/build.dart`, change the `sources` list to `['src/prayertimes.c', 'src/abi_probe.c']`
-- [ ] Step 4: Run `dart analyze`
-- [ ] Step 5: Run `dart test`
-- [ ] Step 6: Run `git grep -c sum_long_running`
-- [ ] Step 7: Commit
+- [x] Step 2: Run `git rm src/libmuslim_dart.c src/libmuslim_dart.h lib/libmuslim_dart_bindings_generated.dart test/libmuslim_dart_test.dart ffigen.yaml`
+- [x] Step 3: In `hook/build.dart`, change the `sources` list to `['src/prayertimes.c', 'src/abi_probe.c']`
+- [x] Step 4: In `hook/build.dart`, change `std: 'gnu11'` back to `std: 'c11'`. **Amendment, added after Task 2 reported its deviation.** Task 2 had to relax the baseline to `gnu11` because the template's `src/libmuslim_dart.c` calls `usleep`, which strict `-std=c11` hides. Step 2 of this task deletes that file, so the only remaining translation units are `src/prayertimes.c` and `src/abi_probe.c`, both of which the upstream project builds under strict C11. Restoring it keeps the vendored header honest about the portability it advertises. If the build fails under `c11` after the deletion, that is a real finding about `prayertimes.h`, not a reason to revert to `gnu11` — report it.
+- [x] Step 5: Run `dart analyze`
+- [x] Step 6: Run `dart test`
+- [x] Step 7: Run `git grep -c sum_long_running`
+- [x] Step 8: Commit
+
+**Result:** `1bc9c45`. Amended clause passed, re-run independently: `dart test` exit 0 with 11 tests (10 ABI + 1 golden), `dart analyze lib test hook` exit 0, `git grep -c sum_long_running -- ':!docs'` exit 1 (no match). Scope was exactly the seven planned files.
+
+Step 4's amendment held: the C build succeeds under strict `std: 'c11'` once `src/libmuslim_dart.c` is gone, with no compiler error. No portability finding against `prayertimes.h`.
+
+**Out-of-scope finding, not fixed.** `README.md:43` still reads "For example, see `sumAsync` in `lib/libmuslim_dart.dart`" — a dangling reference to API this task deleted. No task in this plan covers `README.md`. Carried to `verify` as a known gap.
 
 ---
 
@@ -532,7 +561,7 @@ export 'prayertimes.dart';
 **Files:**
 - Modify: `example/lib/main.dart` — replace the whole file, currently 73 lines
 
-- [ ] Step 1: Replace the entire contents of `example/lib/main.dart`:
+- [x] Step 1: Replace the entire contents of `example/lib/main.dart`:
 ```dart
 import 'dart:ffi';
 
@@ -629,6 +658,12 @@ class _MyAppState extends State<MyApp> {
 }
 ```
 
-- [ ] Step 2: Run `flutter pub get` inside `example/`
-- [ ] Step 3: Run `dart analyze` inside `example/`
-- [ ] Step 4: Commit
+- [x] Step 2: Run `flutter pub get` inside `example/`
+- [x] Step 3: Run `dart analyze` inside `example/`
+- [x] Step 4: Commit
+
+**Result:** `de539ba`. Clause passed: `dart analyze` inside `example/` exit 0, and `dart analyze` at the repository root is back to exit 0 for the first time since Task 6.
+
+**Authorised scope extension.** The Files block named only `example/lib/main.dart`, but `example/` is a separate package and did not depend on `ffi`, which the replacement needs for `calloc`, `malloc` and `toNativeUtf8`. `example/pubspec.yaml` gained `ffi: ^2.1.4` and `example/pubspec.lock` followed. This was pre-authorised in the dispatch rather than taken by the implementer.
+
+**Out-of-scope finding, not fixed.** `flutter pub get` generated seven plugin-registrant files under `example/linux`, `example/macos` and `example/windows` that no `.gitignore` covers, so the working tree is no longer clean. They are Flutter build artifacts, not source. Carried to `verify` alongside the `README.md` reference.

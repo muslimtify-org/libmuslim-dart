@@ -35,9 +35,19 @@ Each goal states what must be observably true when the change is done.
    functions (`format_time_hm`, `format_time_hms`, `method_params_get`,
    `method_from_string`, `method_to_string`, `calculate_prayer_times`), both
    structs and all four enums.
-3. `dart run ffigen --config ffigen/prayertimes.yaml && git diff --exit-code
-   lib/src/` exits zero on a clean tree — the committed bindings are not stale
-   relative to the header.
+3. The repository's regeneration command exits zero on a clean tree — the
+   committed bindings are not stale relative to the header.
+
+   **Amended 2026-08-15, after verification.** Originally this named
+   `dart run ffigen --config ffigen/prayertimes.yaml && git diff --exit-code
+   lib/src/`, which exits 1 here: libclang does not locate its own resource
+   directory, so `/usr/include/string.h` fails on `stddef.h: file not found`.
+   This reproduces with the pre-existing root `ffigen.yaml`, so it predates this
+   work and is not a defect in the bindings — with the resource directory
+   supplied, regeneration produces no drift. `llvm-path: ['/usr']` does not fix
+   it; `CPATH="$(clang -print-resource-dir)/include"` does, on any clang version.
+   The goal now points at a committed regeneration entry point that sets this
+   itself, so the check is one runnable command rather than undocumented lore.
 4. `test/prayertimes_abi_test.dart` passes: struct sizes match `abi_sizeof_*()`,
    every field of `MethodParams` and `struct PrayerTimes` round-trips its
    sentinel value, the 13 `abi_constant_*` doubles match ffigen's emitted
@@ -49,9 +59,17 @@ Each goal states what must be observably true when the change is done.
    `sum` or `sum_long_running` symbol remains anywhere in the package.
 7. `dart run example/lib/main.dart`-equivalent (the Flutter example app) builds
    and displays prayer times rather than `sum(1, 2)`.
-8. Adding a second module later requires only: a new `src/<module>.c`, a new
-   `ffigen/<module>.yaml`, a new `lib/<module>.dart`, and one entry appended to
-   `hook/build.dart`'s `sources` list. No existing file changes shape.
+8. **Deferred, not satisfied.** Adding a second module later requires only: a
+   new `src/<module>.c`, a new `ffigen/<module>.yaml`, a new
+   `lib/<module>.dart`, and one entry appended to `hook/build.dart`'s `sources`
+   list, with no existing file changing shape.
+
+   **Waived 2026-08-15, on the record, at the user's decision.** This criterion
+   cannot be observed without adding a second module, and building hijri now to
+   prove a claim about hijri would be doing the next cycle's work to tick this
+   cycle's box. The layout exists and was built for it; the claim is unproven.
+   It is measured for real when `hijri.h` lands — if that cycle touches any file
+   beyond the four named above, this goal failed and the layout needs revisiting.
 
 ## Non-goals
 
