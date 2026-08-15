@@ -195,7 +195,7 @@ Establishes the layout every later module inherits, and is the task that satisfi
 - Create: `lib/src/prayertimes/prayertimes_bindings_generated.dart` (by running ffigen, not by hand)
 - Create: `lib/prayertimes.dart`
 
-- [ ] Step 1: Create `ffigen/prayertimes.yaml`:
+- [x] Step 1: Create `ffigen/prayertimes.yaml`:
 ```yaml
 # Run with `dart run ffigen --config ffigen/prayertimes.yaml`.
 name: PrayertimesBindings
@@ -219,9 +219,9 @@ comments:
   length: full
 ```
 
-- [ ] Step 2: Run `dart run ffigen --config ffigen/prayertimes.yaml`
+- [x] Step 2: Run `dart run ffigen --config ffigen/prayertimes.yaml`
 
-- [ ] Step 3: Create `lib/prayertimes.dart`, the module's public entry point. Today it only re-exports the generated bindings; the idiomatic Dart API is built here in a later cycle. Its doc comment is where the boundary's ownership and failure rules live, so they are not rediscovered by whoever writes that API:
+- [x] Step 3: Create `lib/prayertimes.dart`, the module's public entry point. Today it only re-exports the generated bindings; the idiomatic Dart API is built here in a later cycle. Its doc comment is where the boundary's ownership and failure rules live, so they are not rediscovered by whoever writes that API:
 ```dart
 /// Raw FFI bindings for `prayertimes.h`.
 ///
@@ -255,10 +255,18 @@ library;
 export 'src/prayertimes/prayertimes_bindings_generated.dart';
 ```
 
-- [ ] Step 4: Run `dart analyze`
-- [ ] Step 5: Run `grep -c "class MethodParams" lib/src/prayertimes/prayertimes_bindings_generated.dart` and `grep -c "class PrayerTimes" lib/src/prayertimes/prayertimes_bindings_generated.dart`
-- [ ] Step 6: Run `dart run ffigen --config ffigen/prayertimes.yaml && git diff --exit-code lib/src/` to confirm regeneration is idempotent against the committed file. Run it after staging, so the diff has something to compare against.
-- [ ] Step 7: Commit
+- [x] Step 4: Run `dart analyze`
+- [x] Step 5: Run `grep -c "class MethodParams" lib/src/prayertimes/prayertimes_bindings_generated.dart` and `grep -c "class PrayerTimes" lib/src/prayertimes/prayertimes_bindings_generated.dart`
+- [x] Step 6: Run `dart run ffigen --config ffigen/prayertimes.yaml && git diff --exit-code lib/src/` to confirm regeneration is idempotent against the committed file. Run it after staging, so the diff has something to compare against.
+- [x] Step 7: Commit
+
+**Result:** `95bb8a6`. Clause passed: `dart analyze` exit 0, one `class MethodParams` and one `class PrayerTimes` in the generated file, all 6 public functions bound, regeneration idempotent.
+
+**Deviation from Step 1 — relative paths.** ffigen 20.1.1 resolves `headers.entry-points` and `output` against the config file's own directory, not the invocation cwd. With the config at `ffigen/prayertimes.yaml`, the literal paths resolved to `ffigen/src/prayertimes.h` (missing, producing a silently empty 4-line binding file) and `ffigen/lib/src/…`. Both are prefixed with `../` in the committed config. Any future module config must do the same.
+
+**Environment requirement, not encoded anywhere.** Regeneration on this machine needs `CPATH=/usr/lib/clang/22/include` set for the ffigen invocation; without it libclang fails on `stddef.h: file not found` from `/usr/include/string.h`. This reproduces with the old root `ffigen.yaml` too, so it predates this work. It affects the spec's regenerate-and-diff check (Goal 3), which will fail for the wrong reason on a machine where this is unset. Recorded, not fixed — belongs to a follow-up, not this cycle.
+
+**Identifiers ffigen emitted**, confirming Task 4's fallback step is unnecessary: enum members keep their C names (`CalcMethod.CALC_KEMENAG`), and the header's `#define`d doubles become top-level `const double` with their C names (`DHUHA_ALTITUDE`, `DEG_TO_RAD`, …). `mt_days_from_civil` and `mt_civil_from_days` were skipped with a warning, as expected for `static inline` — which is exactly why `src/abi_probe.c` wraps them.
 
 ---
 
