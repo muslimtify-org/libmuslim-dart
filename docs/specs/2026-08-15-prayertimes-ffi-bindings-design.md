@@ -1,7 +1,7 @@
 ---
 title: prayertimes raw FFI bindings
 date: 2026-08-15
-status: draft
+status: approved
 ---
 
 # prayertimes raw FFI bindings — Design
