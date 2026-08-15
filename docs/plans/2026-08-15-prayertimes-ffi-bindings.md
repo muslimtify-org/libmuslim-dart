@@ -508,9 +508,11 @@ void main() {
 
 ---
 
-### Task 6: Remove the template → verify: `dart test` exits zero, `dart analyze` exits zero, and `git grep -c sum_long_running` reports no match
+### Task 6: Remove the template → verify: `dart test` exits zero, `dart analyze lib test hook` exits zero, and `git grep -c sum_long_running -- ':!docs'` reports no match
 
 Everything the prayertimes module needs already exists after Task 5. This task removes the scaffold it was built alongside, and is the last point at which the package still contains code that will never be supported.
+
+**Clause amended after the task ran.** The original read `dart analyze` and `git grep -c sum_long_running`, and both were unsatisfiable by this task through no fault of the implementation. `dart analyze` at the package root descends into `example/`, which this task knowingly breaks and Task 7 repairs, so Task 6 could never make it exit zero — a violation of the rule that a clause must be satisfiable by the task it belongs to. `git grep` without a pathspec searches this plan and its spec, both of which quote `sum_long_running` in prose. The amended clause checks the same two properties against the code alone: no scaffold symbol survives anywhere outside `docs/`, and everything this package actually ships analyzes clean. It is not weaker — `dart analyze lib test hook` covers every Dart file the package owns.
 
 **Files:**
 - Modify: `lib/libmuslim_dart.dart` — replace the whole file, currently the `sum`/`sumAsync` scaffold
@@ -521,7 +523,7 @@ Everything the prayertimes module needs already exists after Task 5. This task r
 - Delete: `test/libmuslim_dart_test.dart`
 - Delete: `ffigen.yaml` — superseded by `ffigen/prayertimes.yaml`
 
-- [ ] Step 1: Replace the entire contents of `lib/libmuslim_dart.dart`:
+- [x] Step 1: Replace the entire contents of `lib/libmuslim_dart.dart`:
 ```dart
 /// libmuslim for Dart: bindings to the libmuslim collection of single-header
 /// C libraries.
@@ -536,13 +538,19 @@ library;
 export 'prayertimes.dart';
 ```
 
-- [ ] Step 2: Run `git rm src/libmuslim_dart.c src/libmuslim_dart.h lib/libmuslim_dart_bindings_generated.dart test/libmuslim_dart_test.dart ffigen.yaml`
-- [ ] Step 3: In `hook/build.dart`, change the `sources` list to `['src/prayertimes.c', 'src/abi_probe.c']`
-- [ ] Step 4: In `hook/build.dart`, change `std: 'gnu11'` back to `std: 'c11'`. **Amendment, added after Task 2 reported its deviation.** Task 2 had to relax the baseline to `gnu11` because the template's `src/libmuslim_dart.c` calls `usleep`, which strict `-std=c11` hides. Step 2 of this task deletes that file, so the only remaining translation units are `src/prayertimes.c` and `src/abi_probe.c`, both of which the upstream project builds under strict C11. Restoring it keeps the vendored header honest about the portability it advertises. If the build fails under `c11` after the deletion, that is a real finding about `prayertimes.h`, not a reason to revert to `gnu11` — report it.
-- [ ] Step 5: Run `dart analyze`
-- [ ] Step 6: Run `dart test`
-- [ ] Step 7: Run `git grep -c sum_long_running`
-- [ ] Step 8: Commit
+- [x] Step 2: Run `git rm src/libmuslim_dart.c src/libmuslim_dart.h lib/libmuslim_dart_bindings_generated.dart test/libmuslim_dart_test.dart ffigen.yaml`
+- [x] Step 3: In `hook/build.dart`, change the `sources` list to `['src/prayertimes.c', 'src/abi_probe.c']`
+- [x] Step 4: In `hook/build.dart`, change `std: 'gnu11'` back to `std: 'c11'`. **Amendment, added after Task 2 reported its deviation.** Task 2 had to relax the baseline to `gnu11` because the template's `src/libmuslim_dart.c` calls `usleep`, which strict `-std=c11` hides. Step 2 of this task deletes that file, so the only remaining translation units are `src/prayertimes.c` and `src/abi_probe.c`, both of which the upstream project builds under strict C11. Restoring it keeps the vendored header honest about the portability it advertises. If the build fails under `c11` after the deletion, that is a real finding about `prayertimes.h`, not a reason to revert to `gnu11` — report it.
+- [x] Step 5: Run `dart analyze`
+- [x] Step 6: Run `dart test`
+- [x] Step 7: Run `git grep -c sum_long_running`
+- [x] Step 8: Commit
+
+**Result:** `1bc9c45`. Amended clause passed, re-run independently: `dart test` exit 0 with 11 tests (10 ABI + 1 golden), `dart analyze lib test hook` exit 0, `git grep -c sum_long_running -- ':!docs'` exit 1 (no match). Scope was exactly the seven planned files.
+
+Step 4's amendment held: the C build succeeds under strict `std: 'c11'` once `src/libmuslim_dart.c` is gone, with no compiler error. No portability finding against `prayertimes.h`.
+
+**Out-of-scope finding, not fixed.** `README.md:43` still reads "For example, see `sumAsync` in `lib/libmuslim_dart.dart`" — a dangling reference to API this task deleted. No task in this plan covers `README.md`. Carried to `verify` as a known gap.
 
 ---
 
