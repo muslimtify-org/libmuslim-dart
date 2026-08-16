@@ -2,7 +2,7 @@
 
 **Spec:** docs/specs/2026-08-16-prayertimes-public-api-design.md
 **Goal:** Replace the raw-bindings public surface with a hand-written Dart API — `PrayerTimes.today` / `.forDate` returning UTC instants, a `CalculationMethod` enum, `CalculationParameters` for overrides — and seal the FFI layer inside `lib/src/`.
-**Architecture:** Three new files under `lib/src/prayertimes/` hold the value types, the method catalogue and the calculation entry point. They import the generated bindings with the prefix `c`, so the public `PrayerTimes` class and the generated `PrayerTimes` struct coexist. `lib/prayertimes.dart` narrows from re-exporting the generated file to exporting only the three new files. The task order keeps `dart analyze` green at every commit: the new API is added and exported alongside the old surface first, and the old surface is removed only in the task that migrates its last three call sites.
+**Architecture:** Four new files under `lib/src/prayertimes/` hold the prayer enum, the failure type, the method catalogue and the calculation entry point. They import the generated bindings with the prefix `c`, so the public `PrayerTimes` class and the generated `PrayerTimes` struct coexist. `lib/prayertimes.dart` narrows from re-exporting the generated file to exporting only those four. The task order keeps `dart analyze` green at every commit: the new API is added and exported alongside the old surface first, and the old surface is removed only in the task that migrates its last three call sites.
 
 ## Global constraints
 
@@ -25,15 +25,29 @@ This task creates everything except the calculation itself: the prayer enum, the
 
 **Files:**
 - Modify: `pubspec.yaml` — move the `ffi` entry from `dev_dependencies` to `dependencies`
+- Create: `lib/src/prayertimes/prayer.dart`
 - Create: `lib/src/prayertimes/prayer_times_unavailable.dart`
 - Create: `lib/src/prayertimes/calculation_method.dart`
 - Create: `test/calculation_method_test.dart`
 
 - [ ] Step 1: In `pubspec.yaml`, delete the line `  ffi: ^2.1.4` from the `dev_dependencies` block and add `  ffi: ^2.1.4` to the `dependencies` block, keeping that block alphabetically ordered so it reads `code_assets`, `ffi`, `hooks`, `logging`, `native_toolchain_c`.
 
-- [ ] Step 2: Create `lib/src/prayertimes/prayer_times_unavailable.dart`:
+- [ ] Step 2: Create `lib/src/prayertimes/prayer.dart`:
 ```dart
-import 'prayer_times.dart';
+/// One of the times `PrayerTimes` reports.
+///
+/// [sunrise] and [dhuha] are members so `PrayerTimes.timeOf` can return them,
+/// but they are not prayers: `PrayerTimes.current` and `PrayerTimes.next` skip
+/// both.
+///
+/// This lives in its own file because `PrayerTimesUnavailable` names it and is
+/// created before `PrayerTimes` is.
+enum Prayer { fajr, sunrise, dhuha, dhuhr, asr, maghrib, isha }
+```
+
+- [ ] Step 3: Create `lib/src/prayertimes/prayer_times_unavailable.dart`:
+```dart
+import 'prayer.dart';
 
 /// Thrown when the C library cannot produce a finite time for one or more
 /// prayers on the requested date and location.
@@ -73,7 +87,7 @@ final class PrayerTimesUnavailable implements Exception {
 }
 ```
 
-- [ ] Step 3: Create `lib/src/prayertimes/calculation_method.dart`:
+- [ ] Step 4: Create `lib/src/prayertimes/calculation_method.dart`:
 ```dart
 import 'dart:ffi' as ffi;
 
@@ -287,7 +301,7 @@ T withNativeParams<T>(
 }
 ```
 
-- [ ] Step 4: Create `test/calculation_method_test.dart`:
+- [ ] Step 5: Create `test/calculation_method_test.dart`:
 ```dart
 import 'package:test/test.dart';
 
@@ -375,10 +389,10 @@ void main() {
 }
 ```
 
-- [ ] Step 5: Run `dart pub get`
-- [ ] Step 6: Run `dart test test/calculation_method_test.dart`
-- [ ] Step 7: Run `dart analyze lib test`
-- [ ] Step 8: Commit
+- [ ] Step 6: Run `dart pub get`
+- [ ] Step 7: Run `dart test test/calculation_method_test.dart`
+- [ ] Step 8: Run `dart analyze lib test`
+- [ ] Step 9: Commit
 
 ---
 
@@ -398,15 +412,9 @@ The decimal-hours-to-instant conversion reproduces `format_time_hm`'s arithmetic
 import 'dart:ffi' as ffi;
 
 import 'calculation_method.dart';
+import 'prayer.dart';
 import 'prayer_times_unavailable.dart';
 import 'prayertimes_bindings_generated.dart' as c;
-
-/// One of the times [PrayerTimes] reports.
-///
-/// [sunrise] and [dhuha] are members so [PrayerTimes.timeOf] can return them,
-/// but they are not prayers: [PrayerTimes.current] and [PrayerTimes.next] skip
-/// both.
-enum Prayer { fajr, sunrise, dhuha, dhuhr, asr, maghrib, isha }
 
 const _obligatory = [
   Prayer.fajr,
@@ -827,11 +835,12 @@ void main() {
 }
 ```
 
-- [ ] Step 3: In `lib/prayertimes.dart`, add these three lines immediately above the existing `export 'src/prayertimes/prayertimes_bindings_generated.dart';` line, leaving that line in place for now:
+- [ ] Step 3: In `lib/prayertimes.dart`, add these four export directives immediately above the existing `export 'src/prayertimes/prayertimes_bindings_generated.dart';` line, leaving that line in place for now:
 ```dart
 export 'src/prayertimes/calculation_method.dart'
     show AsrSchool, CalculationMethod, CalculationParameters;
-export 'src/prayertimes/prayer_times.dart' show Prayer, PrayerTimes;
+export 'src/prayertimes/prayer.dart' show Prayer;
+export 'src/prayertimes/prayer_times.dart' show PrayerTimes;
 export 'src/prayertimes/prayer_times_unavailable.dart'
     show PrayerTimesUnavailable;
 ```
@@ -891,7 +900,8 @@ library;
 
 export 'src/prayertimes/calculation_method.dart'
     show AsrSchool, CalculationMethod, CalculationParameters;
-export 'src/prayertimes/prayer_times.dart' show Prayer, PrayerTimes;
+export 'src/prayertimes/prayer.dart' show Prayer;
+export 'src/prayertimes/prayer_times.dart' show PrayerTimes;
 export 'src/prayertimes/prayer_times_unavailable.dart'
     show PrayerTimesUnavailable;
 ```
