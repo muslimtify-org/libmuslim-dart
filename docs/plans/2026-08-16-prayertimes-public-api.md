@@ -30,9 +30,9 @@ This task creates everything except the calculation itself: the prayer enum, the
 - Create: `lib/src/prayertimes/calculation_method.dart`
 - Create: `test/calculation_method_test.dart`
 
-- [ ] Step 1: In `pubspec.yaml`, delete the line `  ffi: ^2.1.4` from the `dev_dependencies` block and add `  ffi: ^2.1.4` to the `dependencies` block, keeping that block alphabetically ordered so it reads `code_assets`, `ffi`, `hooks`, `logging`, `native_toolchain_c`.
+- [x] Step 1: In `pubspec.yaml`, delete the line `  ffi: ^2.1.4` from the `dev_dependencies` block and add `  ffi: ^2.1.4` to the `dependencies` block, keeping that block alphabetically ordered so it reads `code_assets`, `ffi`, `hooks`, `logging`, `native_toolchain_c`.
 
-- [ ] Step 2: Create `lib/src/prayertimes/prayer.dart`:
+- [x] Step 2: Create `lib/src/prayertimes/prayer.dart`:
 ```dart
 /// One of the times `PrayerTimes` reports.
 ///
@@ -45,7 +45,7 @@ This task creates everything except the calculation itself: the prayer enum, the
 enum Prayer { fajr, sunrise, dhuha, dhuhr, asr, maghrib, isha }
 ```
 
-- [ ] Step 3: Create `lib/src/prayertimes/prayer_times_unavailable.dart`:
+- [x] Step 3: Create `lib/src/prayertimes/prayer_times_unavailable.dart`:
 ```dart
 import 'prayer.dart';
 
@@ -87,7 +87,7 @@ final class PrayerTimesUnavailable implements Exception {
 }
 ```
 
-- [ ] Step 4: Create `lib/src/prayertimes/calculation_method.dart`:
+- [x] Step 4: Create `lib/src/prayertimes/calculation_method.dart`:
 ```dart
 import 'dart:ffi' as ffi;
 
@@ -301,7 +301,7 @@ T withNativeParams<T>(
 }
 ```
 
-- [ ] Step 5: Create `test/calculation_method_test.dart`:
+- [x] Step 5: Create `test/calculation_method_test.dart`:
 ```dart
 import 'package:test/test.dart';
 
@@ -389,16 +389,20 @@ void main() {
 }
 ```
 
-- [ ] Step 6: Run `dart pub get`
-- [ ] Step 7: Run `dart test test/calculation_method_test.dart`
-- [ ] Step 8: Run `dart analyze lib test`
-- [ ] Step 9: Commit
+- [x] Step 6: Run `dart pub get`
+- [x] Step 7: Run `dart test test/calculation_method_test.dart`
+- [x] Step 8: Run `dart analyze lib test`
+- [x] Step 9: Commit
+
+**Result:** `cf09368`. Clause passed, re-run independently: `dart analyze lib test` exit 0, `dart test test/calculation_method_test.dart` exit 0. Scope was exactly the five planned files. No deviation from the amended brief.
+
+Recorded, not repaired: `dart analyze` now reports three `prefer_initializing_formals` infos against `CalculationParameters`. They are false positives — an initializing formal cannot give a public parameter name to a private field — but they leave the analyzer no longer silent, which the previous cycle's history shows this repo treats as worth suppressing with a stated reason.
 
 ---
 
 ### Task 2: The `PrayerTimes` value class → verify: `dart analyze lib test` exits zero and `dart test` exits zero
 
-This task adds the calculation itself and starts exporting the new API. `lib/prayertimes.dart` gains the three new exports while **keeping** the generated export, so the three existing call sites still compile and Task 3 can remove it in the same commit that migrates them.
+This task adds the calculation itself and starts exporting the new API. `lib/prayertimes.dart` gains the four new exports while **keeping** the generated export, so the three existing call sites still compile and Task 3 can remove it in the same commit that migrates them.
 
 The decimal-hours-to-instant conversion reproduces `format_time_hm`'s arithmetic exactly — truncate the hour, round the remaining minutes up — because that is the convention the library's own published example was computed under. It deliberately omits C's `hours %= 24`: a time past midnight rolls into the next day rather than wrapping backwards onto the same one.
 
