@@ -27,4 +27,16 @@
 ///   95.0 yields `NaN`s rather than an error.
 library;
 
-export 'src/prayertimes/prayertimes_bindings_generated.dart';
+export 'src/prayertimes/calculation_method.dart'
+    show AsrSchool, CalculationMethod, CalculationParameters;
+export 'src/prayertimes/prayer.dart' show Prayer;
+export 'src/prayertimes/prayer_times.dart' show PrayerTimes;
+export 'src/prayertimes/prayer_times_unavailable.dart'
+    show PrayerTimesUnavailable;
+
+// Transitional, deleted whole in Task 3. The `hide` clause is what keeps this
+// file compiling: the generated library declares its own `AsrSchool` and its
+// own `PrayerTimes` struct, and exporting both spellings of a name from one
+// library is an error at the directive.
+export 'src/prayertimes/prayertimes_bindings_generated.dart'
+    hide AsrSchool, PrayerTimes;
