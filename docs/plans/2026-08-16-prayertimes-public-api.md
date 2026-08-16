@@ -414,7 +414,7 @@ The decimal-hours-to-instant conversion reproduces `format_time_hm`'s arithmetic
 - Modify: `test/prayertimes_abi_test.dart` — its import of `package:libmuslim_dart/prayertimes.dart`
 - Modify: `lib/prayertimes.dart` — add four export directives and a `hide` clause on the existing one
 
-- [ ] Step 1: Create `lib/src/prayertimes/prayer_times.dart`:
+- [x] Step 1: Create `lib/src/prayertimes/prayer_times.dart`:
 ```dart
 import 'dart:ffi' as ffi;
 
@@ -650,7 +650,7 @@ Duration _minutesFrom(double decimalHours) {
 }
 ```
 
-- [ ] Step 2: Create `test/prayer_times_test.dart`:
+- [x] Step 2: Create `test/prayer_times_test.dart`:
 ```dart
 import 'package:test/test.dart';
 
@@ -842,14 +842,14 @@ void main() {
 }
 ```
 
-- [ ] Step 3: In `test/prayertimes_abi_test.dart`, replace the line `import 'package:libmuslim_dart/prayertimes.dart';` with:
+- [x] Step 3: In `test/prayertimes_abi_test.dart`, replace the line `import 'package:libmuslim_dart/prayertimes.dart';` with:
 ```dart
 // This test verifies the generated structs against the compiled C, so it
 // imports them directly. They are not part of the package's public API.
 import 'package:libmuslim_dart/src/prayertimes/prayertimes_bindings_generated.dart';
 ```
 
-- [ ] Step 4: In `lib/prayertimes.dart`, replace the line `export 'src/prayertimes/prayertimes_bindings_generated.dart';` with:
+- [x] Step 4: In `lib/prayertimes.dart`, replace the line `export 'src/prayertimes/prayertimes_bindings_generated.dart';` with:
 ```dart
 export 'src/prayertimes/calculation_method.dart'
     show AsrSchool, CalculationMethod, CalculationParameters;
@@ -866,11 +866,15 @@ export 'src/prayertimes/prayertimes_bindings_generated.dart'
     hide AsrSchool, PrayerTimes;
 ```
 
-- [ ] Step 5: Run `dart test`
-- [ ] Step 6: Run `dart analyze lib test`
-- [ ] Step 7: Commit
+- [x] Step 5: Run `dart test`
+- [x] Step 6: Run `dart analyze lib test`
+- [x] Step 7: Commit
 
 **Note for the implementer:** the exports at Step 4 use `show` clauses, which is what keeps `checkAngle`, `checkNonNegative` and `withNativeParams` — public within `lib/src/` so `prayer_times.dart` can call them — out of the package's public API. If a symbol is missing at the call sites in Task 3, add it to the `show` list rather than removing the clause.
+
+**Result:** `f7a0e4b`. Clause passed, re-run independently: `dart analyze lib test` exit 0 and `dart test` exit 0 with 33 tests. Scope was exactly the four planned files. The Jakarta golden now holds through the public API, which is spec Goal 6.
+
+One deviation, correct as made: Step 1's code carried `import 'dart:ffi' as ffi;`, which the file never references. It raised `unused_import`, taking `dart analyze` to exit 2 and failing this task's own clause. The implementer deleted that one line and changed nothing else. My error in the plan, not theirs.
 
 ---
 
