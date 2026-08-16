@@ -9,33 +9,27 @@ Currently bound: `prayertimes.h` — prayer times for a date and location across
 ## Usage
 
 ```dart
-import 'dart:ffi';
-
-import 'package:ffi/ffi.dart';
 import 'package:libmuslim_dart/prayertimes.dart';
 
-final key = 'kemenag'.toNativeUtf8();
-final params = method_params_get(method_from_string(key.cast<Char>()));
-final times = calculate_prayer_times(
-  2025, 11, 21,    // date
-  -6.2851291,      // latitude, negative = South
-  106.9814968,     // longitude, positive = East
-  7.0,             // UTC offset in hours
-  params,
+final times = PrayerTimes.today(
+  latitude: -6.2851291,    // negative = South
+  longitude: 106.9814968,  // positive = East
+  utcOffset: const Duration(hours: 7),
+  parameters: const CalculationParameters.of(CalculationMethod.kemenag),
 );
 
-final buf = calloc<Char>(16);
-format_time_hm(times.fajr, buf, 16);
-print(buf.cast<Utf8>().toDartString());   // 04:05
-calloc.free(buf);
-malloc.free(key);
+print(times.fajr);          // a UTC instant
+print(times.next());        // Prayer.dhuhr, say
+print(times.timeUntilNext());
 ```
 
-These are the raw generated bindings: pointers, decimal-hour doubles, and
-caller-allocated buffers. An idiomatic Dart layer is a later addition. The
-ownership and failure rules are documented on `lib/prayertimes.dart` — read
-them before calling anything, in particular that `calculate_prayer_times`
-segfaults rather than throwing if handed a null `params`.
+Every time is a UTC instant carrying whole minutes, rounded up to match the C
+library's convention. Bad coordinates raise `ArgumentError`; a latitude where
+the sun never reaches the required angle raises `PrayerTimesUnavailable`.
+
+The FFI bindings underneath are not exported. They live in `lib/src/` because
+their names, structs and failure modes come from C and change when the vendored
+header changes.
 
 ## Project structure
 
