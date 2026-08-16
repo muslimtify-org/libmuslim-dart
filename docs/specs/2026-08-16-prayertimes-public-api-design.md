@@ -1,6 +1,6 @@
 # prayertimes public Dart API — Design
 
-**Status:** proposed
+**Status:** approved
 **Supersedes nothing.** Builds on `docs/specs/2026-08-15-prayertimes-ffi-bindings-design.md`, whose raw binding layer stays exactly as it is.
 
 ## Problem
