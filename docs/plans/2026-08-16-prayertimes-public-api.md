@@ -402,14 +402,17 @@ Recorded, not repaired: `dart analyze` now reports three `prefer_initializing_fo
 
 ### Task 2: The `PrayerTimes` value class → verify: `dart analyze lib test` exits zero and `dart test` exits zero
 
-This task adds the calculation itself and starts exporting the new API. `lib/prayertimes.dart` gains the four new exports while **keeping** the generated export, so the three existing call sites still compile and Task 3 can remove it in the same commit that migrates them.
+This task adds the calculation itself and starts exporting the new API. `lib/prayertimes.dart` gains the four new exports while **keeping** the generated export, so the remaining call sites still compile and Task 3 can remove it in the same commit that migrates them.
+
+Two names have to be got out of the way first. The generated file declares its own `AsrSchool` and its own `PrayerTimes` struct, so exporting it alongside the new API makes both names ambiguous and `lib/prayertimes.dart` stops compiling — an error at the export directive, whether or not anything references them. The transitional export therefore carries a `hide` clause, which Task 3 deletes along with the whole line. `test/prayertimes_abi_test.dart` is the one file that genuinely needs the hidden `PrayerTimes` struct, so its import moves to `lib/src/` here rather than in Task 3.
 
 The decimal-hours-to-instant conversion reproduces `format_time_hm`'s arithmetic exactly — truncate the hour, round the remaining minutes up — because that is the convention the library's own published example was computed under. It deliberately omits C's `hours %= 24`: a time past midnight rolls into the next day rather than wrapping backwards onto the same one.
 
 **Files:**
 - Create: `lib/src/prayertimes/prayer_times.dart`
 - Create: `test/prayer_times_test.dart`
-- Modify: `lib/prayertimes.dart` — add three export lines, keeping the existing one
+- Modify: `test/prayertimes_abi_test.dart` — its import of `package:libmuslim_dart/prayertimes.dart`
+- Modify: `lib/prayertimes.dart` — add four export directives and a `hide` clause on the existing one
 
 - [ ] Step 1: Create `lib/src/prayertimes/prayer_times.dart`:
 ```dart
@@ -839,7 +842,14 @@ void main() {
 }
 ```
 
-- [ ] Step 3: In `lib/prayertimes.dart`, add these four export directives immediately above the existing `export 'src/prayertimes/prayertimes_bindings_generated.dart';` line, leaving that line in place for now:
+- [ ] Step 3: In `test/prayertimes_abi_test.dart`, replace the line `import 'package:libmuslim_dart/prayertimes.dart';` with:
+```dart
+// This test verifies the generated structs against the compiled C, so it
+// imports them directly. They are not part of the package's public API.
+import 'package:libmuslim_dart/src/prayertimes/prayertimes_bindings_generated.dart';
+```
+
+- [ ] Step 4: In `lib/prayertimes.dart`, replace the line `export 'src/prayertimes/prayertimes_bindings_generated.dart';` with:
 ```dart
 export 'src/prayertimes/calculation_method.dart'
     show AsrSchool, CalculationMethod, CalculationParameters;
@@ -847,13 +857,20 @@ export 'src/prayertimes/prayer.dart' show Prayer;
 export 'src/prayertimes/prayer_times.dart' show PrayerTimes;
 export 'src/prayertimes/prayer_times_unavailable.dart'
     show PrayerTimesUnavailable;
+
+// Transitional, deleted whole in Task 3. The `hide` clause is what keeps this
+// file compiling: the generated library declares its own `AsrSchool` and its
+// own `PrayerTimes` struct, and exporting both spellings of a name from one
+// library is an error at the directive.
+export 'src/prayertimes/prayertimes_bindings_generated.dart'
+    hide AsrSchool, PrayerTimes;
 ```
 
-- [ ] Step 4: Run `dart test`
-- [ ] Step 5: Run `dart analyze lib test`
-- [ ] Step 6: Commit
+- [ ] Step 5: Run `dart test`
+- [ ] Step 6: Run `dart analyze lib test`
+- [ ] Step 7: Commit
 
-**Note for the implementer:** the two exports at Step 3 use `show` clauses, which is what keeps `checkAngle`, `checkNonNegative` and `withNativeParams` — public within `lib/src/` so `prayer_times.dart` can call them — out of the package's public API. If a symbol is missing at the call sites in Task 3, add it to the `show` list rather than removing the clause.
+**Note for the implementer:** the exports at Step 4 use `show` clauses, which is what keeps `checkAngle`, `checkNonNegative` and `withNativeParams` — public within `lib/src/` so `prayer_times.dart` can call them — out of the package's public API. If a symbol is missing at the call sites in Task 3, add it to the `show` list rather than removing the clause.
 
 ---
 
@@ -861,7 +878,7 @@ export 'src/prayertimes/prayer_times_unavailable.dart'
 
 This is the task the user asked for by name: after it, no FFI symbol is reachable through `package:libmuslim_dart/...`. It removes the generated export and moves all three dependants in the same commit, so no commit leaves the tree un-analyzable.
 
-`test/prayertimes_abi_test.dart` keeps its raw form — it declares its own `@Native` probe symbols and needs the generated struct types — so it imports the generated file from `lib/src/` directly. That is legal inside the package and is what `lib/src/` is for.
+`test/prayertimes_abi_test.dart` already imports the generated file from `lib/src/` directly, moved there in Task 2 when the transitional `hide` clause took the struct out of the public export. Nothing more is needed for it here.
 
 `test/prayertimes_test.dart` is deleted rather than migrated: its Jakarta golden already exists in `test/prayer_times_test.dart` from Task 2, expressed through the public API, which is what spec Goal 6 asked for.
 
@@ -869,7 +886,6 @@ This is the task the user asked for by name: after it, no FFI symbol is reachabl
 
 **Files:**
 - Modify: `lib/prayertimes.dart` — delete the generated export line and rewrite the library doc comment
-- Modify: `test/prayertimes_abi_test.dart` — its import of `package:libmuslim_dart/prayertimes.dart`
 - Delete: `test/prayertimes_test.dart`
 - Modify: `example/lib/main.dart` — replace everything above `class MyApp`, and the one line inside `build` that reads `times.entries`
 - Modify: `example/pubspec.yaml` — remove the `ffi` dependency
@@ -910,16 +926,9 @@ export 'src/prayertimes/prayer_times_unavailable.dart'
     show PrayerTimesUnavailable;
 ```
 
-- [ ] Step 2: In `test/prayertimes_abi_test.dart`, replace the line `import 'package:libmuslim_dart/prayertimes.dart';` with:
-```dart
-// This test verifies the generated structs against the compiled C, so it
-// imports them directly. They are not part of the package's public API.
-import 'package:libmuslim_dart/src/prayertimes/prayertimes_bindings_generated.dart';
-```
+- [ ] Step 2: Delete `test/prayertimes_test.dart`
 
-- [ ] Step 3: Delete `test/prayertimes_test.dart`
-
-- [ ] Step 4: In `example/lib/main.dart`, replace everything above the line `class MyApp extends StatefulWidget {` with:
+- [ ] Step 3: In `example/lib/main.dart`, replace everything above the line `class MyApp extends StatefulWidget {` with:
 ```dart
 import 'package:flutter/material.dart';
 import 'package:libmuslim_dart/prayertimes.dart';
@@ -956,12 +965,12 @@ const _labels = {
 
 ```
 
-- [ ] Step 5: In `example/lib/main.dart`, change the field declaration `late Map<String, String> times;` to:
+- [ ] Step 4: In `example/lib/main.dart`, change the field declaration `late Map<String, String> times;` to:
 ```dart
   late PrayerTimes times;
 ```
 
-- [ ] Step 6: In `example/lib/main.dart`, replace the two lines
+- [ ] Step 5: In `example/lib/main.dart`, replace the two lines
 ```dart
                 for (final entry in times.entries)
                   Text('${entry.key}: ${entry.value}', style: textStyle),
@@ -975,9 +984,9 @@ with:
                   ),
 ```
 
-- [ ] Step 7: In `example/pubspec.yaml`, delete the line `  ffi: ^2.1.4` and the blank line following it from the `dependencies` block
+- [ ] Step 6: In `example/pubspec.yaml`, delete the line `  ffi: ^2.1.4` and the blank line following it from the `dependencies` block
 
-- [ ] Step 8: In `README.md`, replace the fenced `dart` block under `## Usage` and the paragraph immediately after it (the one beginning "These are the raw generated bindings") with:
+- [ ] Step 7: In `README.md`, replace the fenced `dart` block under `## Usage` and the paragraph immediately after it (the one beginning "These are the raw generated bindings") with:
 ````markdown
 ```dart
 import 'package:libmuslim_dart/prayertimes.dart';
@@ -1003,8 +1012,8 @@ their names, structs and failure modes come from C and change when the vendored
 header changes.
 ````
 
-- [ ] Step 9: Run `flutter pub get` inside `example/`
-- [ ] Step 10: Run `dart test`
-- [ ] Step 11: Run `dart analyze`
-- [ ] Step 12: Run `flutter test` inside `example/`
-- [ ] Step 13: Commit
+- [ ] Step 8: Run `flutter pub get` inside `example/`
+- [ ] Step 9: Run `dart test`
+- [ ] Step 10: Run `dart analyze`
+- [ ] Step 11: Run `flutter test` inside `example/`
+- [ ] Step 12: Commit
