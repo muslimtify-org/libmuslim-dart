@@ -1,3 +1,11 @@
+## Unreleased
+
+* Synced the vendored `src/prayertimes.h` from libmuslim `main`, which fixes
+  the C time formatters and corrects the ACCURACY check counts. No Dart change
+  was needed. `_minutesFrom` converts through a `Duration` rather than
+  reproducing C's field wrapping, so times outside 0 to 24 hours already
+  resolved onto the correct calendar day in both directions.
+
 ## 0.0.1
 
 Initial release.
