@@ -27,7 +27,7 @@
 - Modify: `hook/build.dart` — the `build` callback body
 - Create: `test/build_hook_test.dart`
 
-- [ ] Step 1: In `hook/build.dart`, insert this guard as the first statement inside the `build(args, (input, output) async {` callback, immediately above the existing `final packageName = input.packageName;` line:
+- [x] Step 1: In `hook/build.dart`, insert this guard as the first statement inside the `build(args, (input, output) async {` callback, immediately above the existing `final packageName = input.packageName;` line:
 ```dart
     // Flutter runs this hook with no asset types requested on `flutter run`'s
     // hot-reload path, and the input it sends then carries no `extensions`
@@ -38,7 +38,7 @@
 
 ```
 
-- [ ] Step 2: Create `test/build_hook_test.dart`:
+- [x] Step 2: Create `test/build_hook_test.dart`:
 ```dart
 @TestOn('vm')
 library;
@@ -104,7 +104,13 @@ void main() {
 }
 ```
 
-- [ ] Step 3: Run `dart test test/build_hook_test.dart`
-- [ ] Step 4: Run `dart test`
-- [ ] Step 5: Run `dart analyze`
-- [ ] Step 6: Commit
+- [x] Step 3: Run `dart test test/build_hook_test.dart`
+- [x] Step 4: Run `dart test`
+- [x] Step 5: Run `dart analyze`
+- [x] Step 6: Commit
+
+**Result:** `ef14888`. Clause passed, re-run independently: `dart test test/build_hook_test.dart` exit 0, `dart test` exit 0 with 33 tests, `dart analyze` exit 0. Scope was exactly the two planned files.
+
+The guard was proven to guard, not merely to be green. The implementer ran the new test before editing the hook and got exit 1 with the null-check trace. I then re-checked it myself by restoring `hook/build.dart` from `9ef8f00` and re-running: exit 1 without the fix, exit 0 with it.
+
+The symptom itself is gone. `flutter run -d linux` with hot reload, the exact command that reproduced the crash, now reaches the interactive prompt with no occurrence of `Null check operator` or `Building native assets failed`.
