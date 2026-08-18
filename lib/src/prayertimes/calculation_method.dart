@@ -4,6 +4,12 @@ import 'package:ffi/ffi.dart';
 
 import 'prayertimes_bindings_generated.dart' as c;
 
+// `_asrSchool` and `_ihtiyat` are private fields set from public named
+// parameters of the same base name. `prefer_initializing_formals`'s fix
+// (`this._asrSchool`) would make the named parameter private, which Dart
+// does not allow, so the lint is a false positive here.
+// ignore_for_file: prefer_initializing_formals
+
 /// Which shadow length marks the start of Asr.
 enum AsrSchool {
   /// Asr begins when an object's shadow equals its own length. Every method in
