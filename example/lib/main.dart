@@ -1,6 +1,3 @@
-import 'dart:ffi';
-
-import 'package:ffi/ffi.dart';
 import 'package:flutter/material.dart';
 import 'package:libmuslim_dart/prayertimes.dart';
 
@@ -8,45 +5,35 @@ void main() {
   runApp(const MyApp());
 }
 
-/// Formats one decimal-hours time through the C formatter.
-String _hm(double hours) {
-  final buf = calloc<Char>(16);
-  try {
-    format_time_hm(hours, buf, 16);
-    return buf.cast<Utf8>().toDartString();
-  } finally {
-    calloc.free(buf);
-  }
-}
+/// Jakarta's UTC offset, used both to calculate today's prayer times and to
+/// render them back in local time.
+const _jakartaUtcOffset = Duration(hours: 7);
 
 /// Jakarta, using the Kemenag method, for today.
-Map<String, String> _jakartaToday() {
-  final key = 'kemenag'.toNativeUtf8();
-  try {
-    final params = method_params_get(method_from_string(key.cast<Char>()));
-    final now = DateTime.now();
-    final t = calculate_prayer_times(
-      now.year,
-      now.month,
-      now.day,
-      -6.2851291,
-      106.9814968,
-      7.0,
-      params,
-    );
-    return {
-      'Fajr': _hm(t.fajr),
-      'Sunrise': _hm(t.sunrise),
-      'Dhuha': _hm(t.dhuha),
-      'Dhuhr': _hm(t.dhuhr),
-      'Asr': _hm(t.asr),
-      'Maghrib': _hm(t.maghrib),
-      'Isha': _hm(t.isha),
-    };
-  } finally {
-    malloc.free(key);
-  }
+PrayerTimes _jakartaToday() => PrayerTimes.today(
+  latitude: -6.2851291,
+  longitude: 106.9814968,
+  utcOffset: _jakartaUtcOffset,
+  parameters: const CalculationParameters.of(CalculationMethod.kemenag),
+);
+
+/// Renders one time in Jakarta's own offset, which is where it means
+/// something — not in whatever zone this device happens to be in.
+String _hm(DateTime time) {
+  final local = time.add(_jakartaUtcOffset);
+  return '${local.hour.toString().padLeft(2, '0')}:'
+      '${local.minute.toString().padLeft(2, '0')}';
 }
+
+const _labels = {
+  Prayer.fajr: 'Fajr',
+  Prayer.sunrise: 'Sunrise',
+  Prayer.dhuha: 'Dhuha',
+  Prayer.dhuhr: 'Dhuhr',
+  Prayer.asr: 'Asr',
+  Prayer.maghrib: 'Maghrib',
+  Prayer.isha: 'Isha',
+};
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
@@ -56,7 +43,7 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  late Map<String, String> times;
+  late PrayerTimes times;
 
   @override
   void initState() {
@@ -81,8 +68,11 @@ class _MyAppState extends State<MyApp> {
                   style: textStyle,
                 ),
                 const SizedBox(height: 10),
-                for (final entry in times.entries)
-                  Text('${entry.key}: ${entry.value}', style: textStyle),
+                for (final entry in _labels.entries)
+                  Text(
+                    '${entry.value}: ${_hm(times.timeOf(entry.key))}',
+                    style: textStyle,
+                  ),
               ],
             ),
           ),
