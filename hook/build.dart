@@ -9,6 +9,13 @@ import 'package:code_assets/code_assets.dart';
 
 void main(List<String> args) async {
   await build(args, (input, output) async {
+    // Flutter runs this hook with no asset types requested on `flutter run`'s
+    // hot-reload path, and the input it sends then carries no `extensions`
+    // object at all. Reading `input.config.code` in that state dereferences
+    // null inside CodeConfig and takes the whole build down with it, so there
+    // is nothing to build here and saying so early is the whole fix.
+    if (!input.config.buildCodeAssets) return;
+
     final packageName = input.packageName;
     final cbuilder = CBuilder.library(
       name: packageName,
