@@ -1,5 +1,9 @@
 ## Unreleased
 
+* **Breaking.** `PrayerTimes` carries the five prescribed prayers only. `sunrise` and `dhuha` are removed, along with the `Prayer.sunrise` and `Prayer.dhuha` enum members and the generated `DHUHA_ALTITUDE` constant. Sunrise is the end of the fajr window rather than a prayer, and dhuha is a voluntary prayer carried only by Indonesian timetables. Both are still computed inside the C library, because maghrib is sunset and every high-latitude substitution measures the night between sunset and sunrise, but neither is part of the contract ([libmuslim#63](https://github.com/muslimtify-org/libmuslim/pull/63)).
+
+  This also removes the reason `PrayerTimesUnavailable` was most often thrown. A dhuha that never occurred used to make the whole day unavailable, which above roughly 62.5 degrees is most of the summer. `Prayer.values` is now exactly the set of prescribed prayers, so the separate obligatory-prayer list that `current` and `next` walked is gone.
+
 * Synced the vendored `src/prayertimes.h` from libmuslim `main`, which fixes
   the C time formatters and corrects the ACCURACY check counts. No Dart change
   was needed. `_minutesFrom` converts through a `Duration` rather than
@@ -34,8 +38,4 @@ worst case for `|latitude| <= 60`. Fajr and isha have no oracle behind them
 upstream, tracked as
 [libmuslim#52](https://github.com/muslimtify-org/libmuslim/issues/52).
 
-Known issue: `dhuha` is NaN above roughly 62.5 degrees of latitude on the days
-the Sun never reaches the dhuha altitude, with no error and no sentinel. At
-Reykjavik that is 40 days a year. Sunrise and dhuhr solve normally on those
-same days, so only this one field is affected
-([libmuslim#51](https://github.com/muslimtify-org/libmuslim/issues/51)).
+That known issue about `dhuha` being NaN above roughly 62.5 degrees no longer applies, because the field is gone. See the breaking change at the top of this file.

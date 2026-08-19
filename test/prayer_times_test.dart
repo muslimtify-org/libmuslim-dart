@@ -29,8 +29,6 @@ void main() {
     final times = _jakarta();
     final ordered = [
       times.fajr,
-      times.sunrise,
-      times.dhuha,
       times.dhuhr,
       times.asr,
       times.maghrib,
@@ -52,21 +50,23 @@ void main() {
     for (final prayer in Prayer.values) {
       expect(times.timeOf(prayer), isA<DateTime>());
     }
-    expect(times.timeOf(Prayer.sunrise), times.sunrise);
+    expect(times.timeOf(Prayer.fajr), times.fajr);
     expect(times.timeOf(Prayer.isha), times.isha);
   });
 
-  test('current and next skip sunrise and dhuha', () {
+  test('current and next report the surrounding window', () {
     final times = _jakarta();
-    final justAfterSunrise = times.sunrise.add(const Duration(minutes: 1));
-    expect(times.current(justAfterSunrise), Prayer.fajr);
-    expect(times.next(justAfterSunrise), Prayer.dhuhr);
+    final betweenFajrAndDhuhr = times.fajr.add(const Duration(minutes: 1));
+    expect(times.current(betweenFajrAndDhuhr), Prayer.fajr);
+    expect(times.next(betweenFajrAndDhuhr), Prayer.dhuhr);
   });
 
   test('current is null before fajr and next is null after isha', () {
     final times = _jakarta();
-    expect(times.current(times.fajr.subtract(const Duration(minutes: 1))),
-        isNull);
+    expect(
+      times.current(times.fajr.subtract(const Duration(minutes: 1))),
+      isNull,
+    );
     expect(times.next(times.isha.add(const Duration(minutes: 1))), isNull);
     expect(
       times.timeUntilNext(times.isha.add(const Duration(minutes: 1))),
@@ -87,8 +87,10 @@ void main() {
       utcOffset: _offset,
     );
     final expected = DateTime.now().toUtc().add(_offset);
-    expect(times.date,
-        DateTime.utc(expected.year, expected.month, expected.day));
+    expect(
+      times.date,
+      DateTime.utc(expected.year, expected.month, expected.day),
+    );
   });
 
   test('the hanafi asr school moves asr later', () {
@@ -122,19 +124,15 @@ void main() {
 
   test('custom parameters produce times', () {
     final byAngle = _jakarta(
-      parameters: CalculationParameters.custom(
-        fajrAngle: 20,
-        ishaAngle: 18,
-      ),
+      parameters: CalculationParameters.custom(fajrAngle: 20, ishaAngle: 18),
     );
     final byInterval = _jakarta(
-      parameters: CalculationParameters.custom(
-        fajrAngle: 20,
-        ishaInterval: 90,
-      ),
+      parameters: CalculationParameters.custom(fajrAngle: 20, ishaInterval: 90),
     );
-    expect(byInterval.isha.difference(byInterval.maghrib),
-        const Duration(minutes: 90));
+    expect(
+      byInterval.isha.difference(byInterval.maghrib),
+      const Duration(minutes: 90),
+    );
     expect(byAngle.isha, isNot(byInterval.isha));
   });
 

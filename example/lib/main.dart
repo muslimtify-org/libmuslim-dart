@@ -27,8 +27,6 @@ String _hm(DateTime time) {
 
 const _labels = {
   Prayer.fajr: 'Fajr',
-  Prayer.sunrise: 'Sunrise',
-  Prayer.dhuha: 'Dhuha',
   Prayer.dhuhr: 'Dhuhr',
   Prayer.asr: 'Asr',
   Prayer.maghrib: 'Maghrib',

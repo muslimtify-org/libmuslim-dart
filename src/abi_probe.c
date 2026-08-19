@@ -53,8 +53,6 @@ void abi_fill_method_params(MethodParams *out) {
 
 void abi_fill_prayer_times(struct PrayerTimes *out) {
   out->fajr = 1.5;
-  out->sunrise = 2.5;
-  out->dhuha = 3.5;
   out->dhuhr = 4.5;
   out->asr = 5.5;
   out->maghrib = 6.5;
@@ -73,7 +71,6 @@ double abi_constant_sun_eccentricity_amplitude2(void) { return SUN_ECCENTRICITY_
 double abi_constant_obliquity_coeff(void) { return OBLIQUITY_COEFF; }
 double abi_constant_obliquity_rate(void) { return OBLIQUITY_RATE; }
 double abi_constant_refraction_correction(void) { return REFRACTION_CORRECTION; }
-double abi_constant_dhuha_altitude(void) { return DHUHA_ALTITUDE; }
 
 /* mt_days_from_civil and mt_civil_from_days are static inline in the header,
  * so they have no external linkage and ffigen cannot bind them. These wrappers

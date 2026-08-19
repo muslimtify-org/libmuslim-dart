@@ -12,7 +12,7 @@ void main() {
     // as the date changes, while still failing if the FFI call returns
     // nothing, throws, or yields NaN.
     final row = RegExp(
-      r'^(Fajr|Sunrise|Dhuha|Dhuhr|Asr|Maghrib|Isha): \d{2}:\d{2}$',
+      r'^(Fajr|Dhuhr|Asr|Maghrib|Isha): \d{2}:\d{2}$',
     );
     final rows = find.byWidgetPredicate(
       (w) => w is Text && w.data != null && row.hasMatch(w.data!),

@@ -11,6 +11,12 @@ import 'dart:ffi' as ffi;
 
 /// Format a decimal-hours time (e.g. 5.5) into "HH:MM" in outBuffer.
 /// Minutes are rounded up (Kemenag convention).
+///
+/// A value outside [0, 24) is reduced onto the clock face first, so 25.075
+/// renders as "01:05" and -0.104 as "23:54". The result names an hour of the
+/// day and cannot say which day, so read the raw double if you need that.
+///
+/// A non-finite value renders as "--:--". Six bytes are enough for either.
 @ffi.Native<ffi.Void Function(ffi.Double, ffi.Pointer<ffi.Char>, ffi.Size)>()
 external void format_time_hm(
   double timeHours,
@@ -21,6 +27,9 @@ external void format_time_hm(
 /// Format a decimal-hours time (e.g. 5.5) into "HH:MM:SS" in outBuffer.
 /// Seconds are rounded to nearest; use format_time_hm for the Kemenag
 /// round-up-to-the-minute convention.
+///
+/// The same reduction applies, so -0.104 renders as "23:53:46". A non-finite
+/// value renders as "--:--:--". Nine bytes are enough for either.
 @ffi.Native<ffi.Void Function(ffi.Double, ffi.Pointer<ffi.Char>, ffi.Size)>()
 external void format_time_hms(
   double timeHours,
@@ -152,11 +161,34 @@ enum AsrSchool {
   };
 }
 
+/// What to do for fajr and isha when the Sun never reaches the required
+/// depression angle, which happens every summer above roughly 48 degrees.
+///
+/// This is a property of the calculation authority, not of the library. Most
+/// authorities serve jurisdictions where the case never arises and publish no
+/// rule at all, so most entries in the method table are HIGHLAT_ANGLE_BASED,
+/// which is a computational convention rather than anyone's ruling. See
+/// docs/research/2026-08-18-high-latitude-conventions.md.
+///
+/// Every value except HIGHLAT_NEAREST_LATITUDE is defined in terms of the
+/// interval between sunset and sunrise, so none of them can answer inside the
+/// polar circle where that interval does not exist. MethodParams.high_lat_ref
+/// covers that case separately.
 enum HighLatMethod {
+  /// no substitution, the time is NaN
   HIGHLAT_NONE(0),
+
+  /// half the night before sunrise, after sunset
   HIGHLAT_MIDDLE_OF_NIGHT(1),
+
+  /// one seventh of the night
   HIGHLAT_ONE_SEVENTH(2),
-  HIGHLAT_ANGLE_BASED(3);
+
+  /// angle/60 of the night, praytimes.org
+  HIGHLAT_ANGLE_BASED(3),
+
+  /// same fraction of the night as at high_lat_ref
+  HIGHLAT_NEAREST_LATITUDE(4);
 
   final int value;
   const HighLatMethod(this.value);
@@ -166,6 +198,7 @@ enum HighLatMethod {
     1 => HIGHLAT_MIDDLE_OF_NIGHT,
     2 => HIGHLAT_ONE_SEVENTH,
     3 => HIGHLAT_ANGLE_BASED,
+    4 => HIGHLAT_NEAREST_LATITUDE,
     _ => throw ArgumentError('Unknown value for HighLatMethod: $value'),
   };
 }
@@ -212,18 +245,61 @@ final class MethodParams extends ffi.Struct {
   /// precautionary minutes added to each time
   @ffi.Int()
   external int ihtiyat;
+
+  /// Fajr and isha substitution when the depression angle is not reached but
+  /// a real night still exists.
+  @ffi.UnsignedInt()
+  external int high_lat_methodAsInt;
+
+  HighLatMethod get high_lat_method =>
+      HighLatMethod.fromValue(high_lat_methodAsInt);
+
+  /// Reference latitude used when there is no sunset or sunrise at all, which
+  /// is the case inside the polar circle. Every rule above is measured in
+  /// units of the night, so without a reference there is nothing to measure
+  /// and the affected times are NaN. Set to 0 when the authority publishes no
+  /// rule for this case, which is most of them.
+  @ffi.Double()
+  external double high_lat_ref;
 }
 
+/// The five prescribed prayer times, each as decimal hours in local time,
+/// so 17.75 means 17:45.
+///
+/// Sunrise and dhuha were removed in v0.2.0. Sunrise is not a prayer, it
+/// is the end of the fajr window, and dhuha is a voluntary prayer carried
+/// only by Indonesian timetables. Both are still computed internally,
+/// because maghrib is sunset and every high-latitude substitution measures
+/// the night between sunset and sunrise, but neither is part of the
+/// contract.
+///
+/// A field is normally in [0, 24), but it is not guaranteed to be, and callers
+/// that do anything other than print it must handle two cases.
+///
+/// Non-finite. Above roughly 66 degrees the Sun can fail to reach the altitude
+/// an event is defined by, and the field is then NaN. Test with isfinite()
+/// before use. This depends on the method: those carrying a high_lat_ref,
+/// currently MWL and Moonsighting, resolve every field at every latitude,
+/// and the other 20 do not.
+///
+/// Outside [0, 24). The high-latitude fallback for fajr and isha can return a
+/// value below 0 or at or above 24, meaning the event falls on the previous or
+/// the next calendar day. This happens on 107 days a year at Reykjavik and 23
+/// at Anchorage under MWL, neither of which produces a NaN, so the two cases
+/// are independent.
+///
+/// The double is the only thing that carries the day offset. Reducing a field
+/// into [0, 24) before building a date or a timestamp therefore moves the event
+/// silently onto the wrong day. Keep the whole value. format_time_hm() and
+/// format_time_hms() handle both cases, but a clock string cannot express a
+/// date, so they do not preserve the offset either.
+///
+/// Whether this struct should carry the offset explicitly is open, see issue
+/// #56. Until it is settled the raw value is the contract, and
+/// tests/test_prayertimes.c pins it.
 final class PrayerTimes extends ffi.Struct {
   @ffi.Double()
   external double fajr;
-
-  @ffi.Double()
-  external double sunrise;
-
-  /// Dhuha prayer time (Kemenag: ~28-30 min after sunrise)
-  @ffi.Double()
-  external double dhuha;
 
   @ffi.Double()
   external double dhuhr;
@@ -263,5 +339,3 @@ const double OBLIQUITY_COEFF = 23.439;
 const double OBLIQUITY_RATE = 3.6e-7;
 
 const double REFRACTION_CORRECTION = 0.833;
-
-const double DHUHA_ALTITUDE = 4.3;
