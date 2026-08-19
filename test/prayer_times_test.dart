@@ -183,4 +183,51 @@ void main() {
       );
     });
   });
+
+  group('times outside 0 to 24 hours land on the right calendar day', () {
+    // The C library returns a decimal hour below 0 or at or above 24 when the
+    // high-latitude substitution puts an event on an adjacent day, and the
+    // double is the only thing carrying that offset. Reproducing C's field
+    // wrapping here would silently move the event onto the wrong day, so these
+    // pin both directions against values read straight out of the C header.
+    //
+    // Mutation record: wrapping the returned Duration, by changing the last
+    // line of _minutesFrom to
+    //   return Duration(minutes: (wholeHours * 60 + minutes) % 1440);
+    // fails both tests, pasted verbatim from the terminal:
+    //   Expected: DateTime:<2025-04-08 00:09:00.000Z>
+    //     Actual: DateTime:<2025-04-07 00:09:00.000Z>
+    //   Expected: DateTime:<2025-05-16 22:54:00.000Z>
+    //     Actual: DateTime:<2025-05-17 22:54:00.000Z>
+    // Wrapping wholeHours alone does not, because minutes is computed from
+    // decimalHours - wholeHours and absorbs the 24 back.
+
+    test('an hour at or above 24 rolls forward', () {
+      // C: calculate_prayer_times(2025, 4, 7, 64.15, -21.94, 0.0, MWL)
+      // returns isha = 24.134988, which is 00:08:06 on 8 April, and the
+      // minute ceiling carries it to 00:09.
+      final times = PrayerTimes.forDate(
+        DateTime.utc(2025, 4, 7),
+        latitude: 64.15,
+        longitude: -21.94,
+        utcOffset: Duration.zero,
+      );
+      expect(times.isha, DateTime.utc(2025, 4, 8, 0, 9));
+      expect(times.isha.isAfter(times.maghrib), isTrue);
+    });
+
+    test('an hour below 0 rolls back', () {
+      // C: calculate_prayer_times(2025, 5, 17, 69.65, 18.96, 1.0, MWL)
+      // returns fajr = -0.104232, which is 23:53:45 local on 16 May. At
+      // +01:00 that is 22:53:45 UTC, and the ceiling carries it to 22:54.
+      final times = PrayerTimes.forDate(
+        DateTime.utc(2025, 5, 17),
+        latitude: 69.65,
+        longitude: 18.96,
+        utcOffset: const Duration(hours: 1),
+      );
+      expect(times.fajr, DateTime.utc(2025, 5, 16, 22, 54));
+      expect(times.fajr.isBefore(times.dhuhr), isTrue);
+    });
+  });
 }
