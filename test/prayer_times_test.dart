@@ -230,4 +230,79 @@ void main() {
       expect(times.fajr.isBefore(times.dhuhr), isTrue);
     });
   });
+
+  group('the polar case follows the method, and the caller can override it', () {
+    // Longyearbyen, 78.22N, inside the polar circle at midsummer.
+    DateTime? fajrAt(CalculationParameters parameters) {
+      try {
+        return PrayerTimes.forDate(
+          DateTime.utc(2026, 6, 21),
+          latitude: 78.22,
+          longitude: 15.65,
+          utcOffset: const Duration(hours: 1),
+          parameters: parameters,
+        ).fajr;
+      } on PrayerTimesUnavailable {
+        return null;
+      }
+    }
+
+    test('a method whose authority publishes a rule resolves', () {
+      // MWL carries the reference latitude of 45 its own Fiqh Council decree
+      // names, so every prescribed time resolves here.
+      expect(
+        fajrAt(const CalculationParameters.of(CalculationMethod.mwl)),
+        DateTime.utc(2026, 6, 21, 0, 40),
+      );
+    });
+
+    test('an unrelated override does not discard that rule', () {
+      // Regression: the native copy taken for an asrSchool or ihtiyat override
+      // did not carry high_lat_method or high_lat_ref, so asking for a
+      // 2 minute ihtiyat silently turned MWL into a method with no polar rule
+      // and this call threw PrayerTimesUnavailable.
+      expect(
+        fajrAt(
+          const CalculationParameters.of(CalculationMethod.mwl, ihtiyat: 2),
+        ),
+        DateTime.utc(2026, 6, 21, 0, 42),
+      );
+    });
+
+    test('a method whose authority is silent reports unavailable', () {
+      // Kemenag publishes no high-latitude rule. The library declines to
+      // invent one on that authority's behalf.
+      expect(
+        fajrAt(const CalculationParameters.of(CalculationMethod.kemenag)),
+        isNull,
+      );
+    });
+
+    test('the caller can supply the rule the authority did not', () {
+      // The choice is the caller's, and it is recorded in the caller's code
+      // rather than misattributed to Kemenag.
+      expect(
+        fajrAt(
+          const CalculationParameters.of(
+            CalculationMethod.kemenag,
+            highLatitudeRule: HighLatitudeRule.angleBased,
+            highLatitudeReferenceLatitude: 45.0,
+          ),
+        ),
+        DateTime.utc(2026, 6, 21, 0, 25),
+      );
+    });
+
+    test('a reference latitude outside 0 to 90 is rejected', () {
+      expect(
+        () => fajrAt(
+          const CalculationParameters.of(
+            CalculationMethod.kemenag,
+            highLatitudeReferenceLatitude: 91.0,
+          ),
+        ),
+        throwsArgumentError,
+      );
+    });
+  });
 }

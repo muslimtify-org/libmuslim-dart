@@ -11,6 +11,33 @@ import 'prayertimes_bindings_generated.dart' as c;
 // ignore_for_file: prefer_initializing_formals
 
 /// Which shadow length marks the start of Asr.
+/// What to do when the Sun never reaches a method's depression angle.
+///
+/// Every value except [nearestLatitude] measures the substitution in units of
+/// the night between sunset and sunrise, so none of them can answer inside the
+/// polar circle, where that interval does not exist. Pair one with
+/// `highLatitudeReferenceLatitude` to cover that case.
+enum HighLatitudeRule {
+  /// No substitution. The affected times are unavailable.
+  none(0),
+
+  /// Half the night before sunrise, and after sunset.
+  middleOfNight(1),
+
+  /// One seventh of the night.
+  oneSeventh(2),
+
+  /// The twilight angle divided by 60, as a fraction of the night.
+  angleBased(3),
+
+  /// The same fraction of the night as at the reference latitude.
+  nearestLatitude(4);
+
+  const HighLatitudeRule(this._value);
+
+  final int _value;
+}
+
 enum AsrSchool {
   /// Asr begins when an object's shadow equals its own length. Every method in
   /// the C table uses this unless a caller overrides it.
@@ -60,12 +87,10 @@ enum CalculationMethod {
   ///
   /// Read from the C table on each access rather than duplicated here, so
   /// there is exactly one source of truth for these strings.
-  String get displayName =>
-      _table(this).ref.name.cast<Utf8>().toDartString();
+  String get displayName => _table(this).ref.name.cast<Utf8>().toDartString();
 
   /// The method's short key, for example `kemenag`.
-  String get key =>
-      c.method_to_string(_native).cast<Utf8>().toDartString();
+  String get key => c.method_to_string(_native).cast<Utf8>().toDartString();
 }
 
 /// The parameter set a calculation runs with.
@@ -79,9 +104,13 @@ final class CalculationParameters {
     CalculationMethod method, {
     AsrSchool? asrSchool,
     int? ihtiyat,
+    HighLatitudeRule? highLatitudeRule,
+    double? highLatitudeReferenceLatitude,
   }) : _method = method,
        _asrSchool = asrSchool,
        _ihtiyat = ihtiyat,
+       _highLatitudeRule = highLatitudeRule,
+       _highLatitudeReferenceLatitude = highLatitudeReferenceLatitude,
        _fajrAngle = null,
        _ishaAngle = null,
        _ishaInterval = null,
@@ -100,7 +129,11 @@ final class CalculationParameters {
     int maghribInterval = 0,
     AsrSchool asrSchool = AsrSchool.standard,
     int ihtiyat = 0,
+    HighLatitudeRule highLatitudeRule = HighLatitudeRule.angleBased,
+    double highLatitudeReferenceLatitude = 0.0,
   }) : _method = null,
+       _highLatitudeRule = highLatitudeRule,
+       _highLatitudeReferenceLatitude = highLatitudeReferenceLatitude,
        _fajrAngle = fajrAngle,
        _ishaAngle = ishaAngle,
        _ishaInterval = ishaInterval,
@@ -129,6 +162,8 @@ final class CalculationParameters {
   final double? _ishaAngle;
   final int? _ishaInterval;
   final int _maghribInterval;
+  final HighLatitudeRule? _highLatitudeRule;
+  final double? _highLatitudeReferenceLatitude;
 }
 
 /// Throws [ArgumentError] unless [value] is a finite angle in 0..90 degrees.
@@ -174,11 +209,21 @@ T withNativeParams<T>(
   final method = parameters._method;
   final asrSchool = parameters._asrSchool;
   final ihtiyat = parameters._ihtiyat;
+  final highLatRule = parameters._highLatitudeRule;
+  final highLatRef = parameters._highLatitudeReferenceLatitude;
 
   if (method != null) {
     final table = _table(method);
-    if (asrSchool == null && ihtiyat == null) return body(table);
+    if (asrSchool == null &&
+        ihtiyat == null &&
+        highLatRule == null &&
+        highLatRef == null) {
+      return body(table);
+    }
     if (ihtiyat != null) checkNonNegative(ihtiyat, 'ihtiyat');
+    if (highLatRef != null) {
+      checkAngle(highLatRef, 'highLatitudeReferenceLatitude');
+    }
 
     final copy = calloc<c.MethodParams>();
     try {
@@ -190,7 +235,10 @@ T withNativeParams<T>(
         ..maghrib_interval = table.ref.maghrib_interval
         ..asr_shadow = asrSchool?._shadowFactor ?? table.ref.asr_shadow
         ..midnight_modeAsInt = table.ref.midnight_modeAsInt
-        ..ihtiyat = ihtiyat ?? table.ref.ihtiyat;
+        ..ihtiyat = ihtiyat ?? table.ref.ihtiyat
+        ..high_lat_methodAsInt =
+            highLatRule?._value ?? table.ref.high_lat_methodAsInt
+        ..high_lat_ref = highLatRef ?? table.ref.high_lat_ref;
       return body(copy);
     } finally {
       calloc.free(copy);
@@ -208,7 +256,9 @@ T withNativeParams<T>(
       ..maghrib_interval = parameters._maghribInterval
       ..asr_shadow = asrSchool!._shadowFactor
       ..midnight_modeAsInt = c.MidnightMode.MIDNIGHT_STANDARD.value
-      ..ihtiyat = ihtiyat!;
+      ..ihtiyat = ihtiyat!
+      ..high_lat_methodAsInt = highLatRule!._value
+      ..high_lat_ref = highLatRef!;
     return body(copy);
   } finally {
     calloc.free(copy);
