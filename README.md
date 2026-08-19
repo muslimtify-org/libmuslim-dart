@@ -6,9 +6,6 @@ collection of stb-style single-header C libraries for Muslim applications.
 Currently bound: `prayertimes.h` — prayer times for a date and location across
 21 calculation methods.
 
-> [!Warning]
-> Not production ready yet, still on active development
-
 ## Usage
 
 ```dart
