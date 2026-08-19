@@ -259,6 +259,19 @@ final class MethodParams extends ffi.Struct {
   /// units of the night, so without a reference there is nothing to measure
   /// and the affected times are NaN. Set to 0 when the authority publishes no
   /// rule for this case, which is most of them.
+  ///
+  /// A caller who needs a time anyway can copy the table entry and set this
+  /// themselves. That is a deliberate escape hatch: the library will not put
+  /// a ruling in an authority's mouth, but it will not stand between a user
+  /// and a prayer time either. The choice is then the caller's, and it is
+  /// recorded in their code rather than misattributed to the authority.
+  ///
+  /// MethodParams mine = *method_params_get(CALC_RUSSIA);
+  /// mine.high_lat_method = HIGHLAT_ANGLE_BASED;
+  /// mine.high_lat_ref = 45.0;
+  ///
+  /// At Murmansk, 68.97 N, that takes 2025 from 102 days with a non-finite
+  /// prescribed time to none. tests/test_prayertimes.c pins both numbers.
   @ffi.Double()
   external double high_lat_ref;
 }
