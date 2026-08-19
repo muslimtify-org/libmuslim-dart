@@ -24,7 +24,7 @@
 library;
 
 export 'src/prayertimes/calculation_method.dart'
-    show AsrSchool, CalculationMethod, CalculationParameters;
+    show AsrSchool, CalculationMethod, CalculationParameters, HighLatitudeRule;
 export 'src/prayertimes/prayer.dart' show Prayer;
 export 'src/prayertimes/prayer_times.dart' show PrayerTimes;
 export 'src/prayertimes/prayer_times_unavailable.dart'

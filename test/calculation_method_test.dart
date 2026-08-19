@@ -56,8 +56,7 @@ void main() {
 
     test('rejects a negative interval or ihtiyat', () {
       expect(
-        () =>
-            CalculationParameters.custom(fajrAngle: 18, ishaInterval: -1),
+        () => CalculationParameters.custom(fajrAngle: 18, ishaInterval: -1),
         throwsArgumentError,
       );
       expect(
