@@ -252,11 +252,15 @@ void main() {
       // names, so every prescribed time resolves here.
       expect(
         fajrAt(const CalculationParameters.of(CalculationMethod.mwl)),
-        DateTime.utc(2026, 6, 21, 0, 40),
+        DateTime.utc(2026, 6, 21, 0, 38),
       );
     });
 
     test('an unrelated override does not discard that rule', () {
+      // The values here changed with libmuslim 2026.08.20, which solves the
+      // whole polar day at the reference latitude rather than borrowing only
+      // sunrise and sunset. Each is checked against the C library directly.
+      //
       // Regression: the native copy taken for an asrSchool or ihtiyat override
       // did not carry high_lat_method or high_lat_ref, so asking for a
       // 2 minute ihtiyat silently turned MWL into a method with no polar rule
@@ -265,7 +269,7 @@ void main() {
         fajrAt(
           const CalculationParameters.of(CalculationMethod.mwl, ihtiyat: 2),
         ),
-        DateTime.utc(2026, 6, 21, 0, 42),
+        DateTime.utc(2026, 6, 21, 0, 40),
       );
     });
 
@@ -289,7 +293,7 @@ void main() {
             highLatitudeReferenceLatitude: 45.0,
           ),
         ),
-        DateTime.utc(2026, 6, 21, 0, 25),
+        DateTime.utc(2026, 6, 21, 0, 6),
       );
     });
 
@@ -302,6 +306,30 @@ void main() {
           ),
         ),
         throwsArgumentError,
+      );
+    });
+    test('asr is unavailable where the Sun casts no shadow', () {
+      // libmuslim 2026.08.20 stopped reporting asr where no shadow can exist.
+      // At Longyearbyen there is a narrow band, four days a year, where the
+      // separation from the declination sits between 90 and 90.833 degrees:
+      // the Sun is visible only by refraction, so sunrise exists and fajr,
+      // maghrib and isha all resolve, but nothing casts a shadow.
+      //
+      // This class throws when any field is non-finite, so the whole day is
+      // unavailable and the four valid times go with it. Pinned so the
+      // behaviour is on record rather than accidental.
+      expect(
+        () => PrayerTimes.forDate(
+          DateTime.utc(2026, 2, 16),
+          latitude: 78.22,
+          longitude: 15.65,
+          utcOffset: const Duration(hours: 1),
+        ),
+        throwsA(
+          isA<PrayerTimesUnavailable>().having((e) => e.prayers, 'prayers', [
+            Prayer.asr,
+          ]),
+        ),
       );
     });
   });
