@@ -12,7 +12,8 @@ import 'package:libmuslim_dart/src/prayertimes/prayertimes_bindings_generated.da
 // bindings suppress the same rule for the same reason.
 // ignore_for_file: non_constant_identifier_names
 
-const _assetId = 'package:libmuslim_dart/libmuslim_dart_bindings_generated.dart';
+const _assetId =
+    'package:libmuslim_dart/libmuslim_dart_bindings_generated.dart';
 
 @Native<Size Function()>(assetId: _assetId)
 external int abi_sizeof_method_params();
@@ -50,8 +51,6 @@ external double abi_constant_obliquity_coeff();
 external double abi_constant_obliquity_rate();
 @Native<Double Function()>(assetId: _assetId)
 external double abi_constant_refraction_correction();
-@Native<Double Function()>(assetId: _assetId)
-external double abi_constant_dhuha_altitude();
 
 @Native<Long Function(Int, Int, Int)>(assetId: _assetId)
 external int abi_days_from_civil(int y, int m, int d);
@@ -99,8 +98,6 @@ void main() {
       try {
         abi_fill_prayer_times(p);
         expect(p.ref.fajr, 1.5);
-        expect(p.ref.sunrise, 2.5);
-        expect(p.ref.dhuha, 3.5);
         expect(p.ref.dhuhr, 4.5);
         expect(p.ref.asr, 5.5);
         expect(p.ref.maghrib, 6.5);
@@ -134,7 +131,6 @@ void main() {
       expect(abi_constant_obliquity_coeff(), OBLIQUITY_COEFF);
       expect(abi_constant_obliquity_rate(), OBLIQUITY_RATE);
       expect(abi_constant_refraction_correction(), REFRACTION_CORRECTION);
-      expect(abi_constant_dhuha_altitude(), DHUHA_ALTITUDE);
     });
   });
 

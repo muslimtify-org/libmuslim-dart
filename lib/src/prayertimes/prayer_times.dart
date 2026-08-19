@@ -3,14 +3,6 @@ import 'prayer.dart';
 import 'prayer_times_unavailable.dart';
 import 'prayertimes_bindings_generated.dart' as c;
 
-const _obligatory = [
-  Prayer.fajr,
-  Prayer.dhuhr,
-  Prayer.asr,
-  Prayer.maghrib,
-  Prayer.isha,
-];
-
 /// The prayer times for one civil day at one location.
 ///
 /// Every time is a UTC instant. A `DateTime` built in the device's local zone
@@ -27,8 +19,6 @@ final class PrayerTimes {
     required this.longitude,
     required this.utcOffset,
     required this.fajr,
-    required this.sunrise,
-    required this.dhuha,
     required this.dhuhr,
     required this.asr,
     required this.maghrib,
@@ -78,8 +68,7 @@ final class PrayerTimes {
     }
 
     final midnightUtc = DateTime.utc(date.year, date.month, date.day);
-    final offsetHours = utcOffset.inMicroseconds /
-        Duration.microsecondsPerHour;
+    final offsetHours = utcOffset.inMicroseconds / Duration.microsecondsPerHour;
 
     final times = withNativeParams(
       parameters,
@@ -96,8 +85,6 @@ final class PrayerTimes {
 
     final hours = <Prayer, double>{
       Prayer.fajr: times.fajr,
-      Prayer.sunrise: times.sunrise,
-      Prayer.dhuha: times.dhuha,
       Prayer.dhuhr: times.dhuhr,
       Prayer.asr: times.asr,
       Prayer.maghrib: times.maghrib,
@@ -126,8 +113,6 @@ final class PrayerTimes {
       longitude: longitude,
       utcOffset: utcOffset,
       fajr: at(Prayer.fajr),
-      sunrise: at(Prayer.sunrise),
-      dhuha: at(Prayer.dhuha),
       dhuhr: at(Prayer.dhuhr),
       asr: at(Prayer.asr),
       maghrib: at(Prayer.maghrib),
@@ -164,18 +149,14 @@ final class PrayerTimes {
   final Duration utcOffset;
 
   final DateTime fajr;
-  final DateTime sunrise;
-  final DateTime dhuha;
   final DateTime dhuhr;
   final DateTime asr;
   final DateTime maghrib;
   final DateTime isha;
 
-  /// The time of [prayer], including [Prayer.sunrise] and [Prayer.dhuha].
+  /// The time of [prayer].
   DateTime timeOf(Prayer prayer) => switch (prayer) {
     Prayer.fajr => fajr,
-    Prayer.sunrise => sunrise,
-    Prayer.dhuha => dhuha,
     Prayer.dhuhr => dhuhr,
     Prayer.asr => asr,
     Prayer.maghrib => maghrib,
@@ -189,7 +170,7 @@ final class PrayerTimes {
   Prayer? current([DateTime? at]) {
     final instant = (at ?? DateTime.now()).toUtc();
     Prayer? found;
-    for (final prayer in _obligatory) {
+    for (final prayer in Prayer.values) {
       if (!timeOf(prayer).isAfter(instant)) found = prayer;
     }
     return found;
@@ -198,7 +179,7 @@ final class PrayerTimes {
   /// The next prayer after [at], or null once Isha has passed.
   Prayer? next([DateTime? at]) {
     final instant = (at ?? DateTime.now()).toUtc();
-    for (final prayer in _obligatory) {
+    for (final prayer in Prayer.values) {
       if (timeOf(prayer).isAfter(instant)) return prayer;
     }
     return null;
