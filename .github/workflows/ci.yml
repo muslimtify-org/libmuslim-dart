@@ -1,0 +1,64 @@
+name: CI
+
+# This package had no CI at all. Everything it ships is reachable from three
+# commands, so this runs all three plus the test suite, which is what actually
+# compiles the vendored C through the build hook.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    # The native assets build hook compiles src/prayertimes.h and
+    # src/abi_probe.c on whichever host runs, so both toolchains are exercised
+    # rather than assuming the C is portable because it looks portable.
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # pubspec.yaml requires sdk ^3.12.2, so `stable` has to be at least that.
+      # Pinning a version here would mean editing two files whenever the
+      # constraint moves.
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: stable
+
+      # --no-example because example/ is a Flutter app that depends on
+      # flutter_test from the SDK, and this job installs only the Dart SDK.
+      # Without the flag `dart pub get` recurses into it and fails with
+      # "the Flutter SDK is not available". Analysing and testing the example
+      # would need Flutter on the runner, which is a bigger change than this
+      # one and belongs in its own.
+      - name: dart pub get
+        run: dart pub get --no-example
+
+      # Formatting first: it is the cheapest failure and the least interesting,
+      # so getting it out of the way keeps a red run pointing at something real.
+      - name: format
+        run: dart format --output=none --set-exit-if-changed lib test tool src
+
+      # analysis_options.yaml pulls in flutter_lints, so this is the linter and
+      # the static analysis in one pass. --fatal-infos because the repository
+      # is currently clean at that level and letting infos accumulate is how it
+      # stops being clean.
+      # Scoped for the same reason as --no-example above. Analysing example/
+      # without Flutter resolved reports 35 unresolved-import errors that say
+      # nothing about this package. The example is still compiled by anyone
+      # who runs it with Flutter, and covering it here needs Flutter on the
+      # runner.
+      - name: analyze
+        run: dart analyze --fatal-infos lib test tool src
+
+      # This is also the build step. `dart test` runs the native assets hook,
+      # which compiles the vendored C and links it, so a C-side break fails
+      # here rather than at a consumer's first run.
+      - name: test
+        run: dart test
