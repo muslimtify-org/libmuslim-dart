@@ -26,7 +26,9 @@ void main(List<String> args) async {
       std: 'c11',
       // prayertimes.h uses sin/cos/atan2 from libm. Windows folds the math
       // functions into the CRT and has no separate libm to link.
-      libraries: input.config.code.targetOS == OS.windows ? const [] : const ['m'],
+      libraries: input.config.code.targetOS == OS.windows
+          ? const []
+          : const ['m'],
     );
     await cbuilder.run(
       input: input,

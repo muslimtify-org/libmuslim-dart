@@ -67,8 +67,12 @@ dart test              # ABI verification and a published golden
 cd example && flutter test
 ```
 
-## Flutter help
+## Platforms
 
-For help getting started with Flutter, view our
-[online documentation](https://docs.flutter.dev), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Android, iOS, Linux, macOS and Windows. The C library is compiled from source
+by `hook/build.dart`, so there is no web support.
+
+## License
+
+MIT. The vendored `src/prayertimes.h` is MIT as well, copyright
+2025-2026 muslimtify-org. See [LICENSE](LICENSE).
