@@ -4,7 +4,7 @@
 /// Each module is also importable on its own, which is the preferred form:
 ///
 /// ```dart
-/// import 'package:libmuslim_dart/prayertimes.dart';
+/// import 'package:libmuslim/prayertimes.dart';
 /// ```
 library;
 

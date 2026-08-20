@@ -16,7 +16,7 @@ ffi-native:
   # Must equal `package:<packageName>/<assetName>` from hook/build.dart.
   # Without it, @Native resolves against this file's own package URI, which
   # no build hook produces.
-  asset-id: 'package:libmuslim_dart/libmuslim_dart_bindings_generated.dart'
+  asset-id: 'package:libmuslim/libmuslim_bindings_generated.dart'
 comments:
   style: any
   length: full

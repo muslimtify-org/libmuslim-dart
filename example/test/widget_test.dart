@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:libmuslim_dart/prayertimes.dart';
+import 'package:libmuslim/prayertimes.dart';
 import 'package:libmuslim_dart_example/main.dart';
 
 void main() {

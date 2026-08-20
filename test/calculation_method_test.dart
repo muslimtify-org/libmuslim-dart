@@ -1,6 +1,6 @@
 import 'package:test/test.dart';
 
-import 'package:libmuslim_dart/src/prayertimes/calculation_method.dart';
+import 'package:libmuslim/src/prayertimes/calculation_method.dart';
 
 void main() {
   group('CalculationMethod', () {

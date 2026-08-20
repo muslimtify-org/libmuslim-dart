@@ -1,6 +1,6 @@
 # libmuslim_dart_example
 
-Demonstrates how to use the libmuslim_dart package.
+Demonstrates how to use the libmuslim package.
 
 ## Getting Started
 

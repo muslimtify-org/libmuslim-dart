@@ -29,7 +29,7 @@ void main() {
           'config': config,
           'out_dir_shared': '${shared.path}/',
           'out_file': outFile,
-          'package_name': 'libmuslim_dart',
+          'package_name': 'libmuslim',
           'package_root': '${Directory.current.path}/',
           'user_defines': <String, Object?>{},
         }),

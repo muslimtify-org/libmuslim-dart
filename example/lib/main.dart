@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:libmuslim_dart/prayertimes.dart';
+import 'package:libmuslim/prayertimes.dart';
 
 void main() {
   runApp(const MyApp());

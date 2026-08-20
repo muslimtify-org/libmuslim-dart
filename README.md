@@ -1,4 +1,4 @@
-# libmuslim_dart
+# libmuslim
 
 Dart FFI bindings for [libmuslim](https://github.com/muslimtify-org), a
 collection of stb-style single-header C libraries for Muslim applications.
@@ -9,7 +9,7 @@ Currently bound: `prayertimes.h` — prayer times for a date and location across
 ## Usage
 
 ```dart
-import 'package:libmuslim_dart/prayertimes.dart';
+import 'package:libmuslim/prayertimes.dart';
 
 final times = PrayerTimes.today(
   latitude: -6.2851291,    // negative = South

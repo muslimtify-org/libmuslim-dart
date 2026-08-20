@@ -5,15 +5,14 @@ import 'package:test/test.dart';
 
 // This test verifies the generated structs against the compiled C, so it
 // imports them directly. They are not part of the package's public API.
-import 'package:libmuslim_dart/src/prayertimes/prayertimes_bindings_generated.dart';
+import 'package:libmuslim/src/prayertimes/prayertimes_bindings_generated.dart';
 
 // The `@Native` declarations below must be spelled exactly as the C symbols
 // they bind, so lowerCamelCase is not available to them. ffigen's own generated
 // bindings suppress the same rule for the same reason.
 // ignore_for_file: non_constant_identifier_names
 
-const _assetId =
-    'package:libmuslim_dart/libmuslim_dart_bindings_generated.dart';
+const _assetId = 'package:libmuslim/libmuslim_bindings_generated.dart';
 
 @Native<Size Function()>(assetId: _assetId)
 external int abi_sizeof_method_params();

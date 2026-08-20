@@ -1,6 +1,6 @@
 import 'package:test/test.dart';
 
-import 'package:libmuslim_dart/prayertimes.dart';
+import 'package:libmuslim/prayertimes.dart';
 
 /// Jakarta, the location the upstream worked example uses.
 const _latitude = -6.2851291;
