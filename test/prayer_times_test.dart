@@ -197,14 +197,14 @@ void main() {
     // fails both tests, pasted verbatim from the terminal:
     //   Expected: DateTime:<2025-04-08 00:09:00.000Z>
     //     Actual: DateTime:<2025-04-07 00:09:00.000Z>
-    //   Expected: DateTime:<2025-05-16 22:54:00.000Z>
-    //     Actual: DateTime:<2025-05-17 22:54:00.000Z>
+    //   Expected: DateTime:<2026-09-06 04:22:00.000Z>
+    //     Actual: DateTime:<2026-09-07 04:22:00.000Z>
     // Wrapping wholeHours alone does not, because minutes is computed from
     // decimalHours - wholeHours and absorbs the 24 back.
 
     test('an hour at or above 24 rolls forward', () {
       // C: calculate_prayer_times(2025, 4, 7, 64.15, -21.94, 0.0, MWL)
-      // returns isha = 24.134988, which is 00:08:06 on 8 April, and the
+      // returns isha = 24.135902, which is 00:08:09 on 8 April, and the
       // minute ceiling carries it to 00:09.
       final times = PrayerTimes.forDate(
         DateTime.utc(2025, 4, 7),
@@ -217,16 +217,26 @@ void main() {
     });
 
     test('an hour below 0 rolls back', () {
-      // C: calculate_prayer_times(2025, 5, 17, 69.65, 18.96, 1.0, MWL)
-      // returns fajr = -0.104232, which is 23:53:45 local on 16 May. At
-      // +01:00 that is 22:53:45 UTC, and the ceiling carries it to 22:54.
+      // C: calculate_prayer_times(2026, 9, 6, 82.50, -62.35, -5.0, MWL)
+      // returns fajr = -0.649757, which is 23:21:00 local on 5 September. At
+      // -05:00 that is 04:21:00 UTC on 6 September, and the ceiling carries
+      // the minute to 04:22.
+      //
+      // This was Tromso, 2025-05-17, until libmuslim 2026.08.22. That case
+      // held by six minutes of negative hour, and the six minutes came from a
+      // twilight crossing the old solver reported on a day that has none, so
+      // fixing libmuslim#79 moved fajr to +2.043258 and the case stopped
+      // exercising this path rather than merely reporting the wrong instant.
+      // Alert is the most negative fajr any settlement sees in 2026, at
+      // thirty-nine minutes, and it is not an artifact of the fix: v0.2.1
+      // returned -0.658336 for the same call.
       final times = PrayerTimes.forDate(
-        DateTime.utc(2025, 5, 17),
-        latitude: 69.65,
-        longitude: 18.96,
-        utcOffset: const Duration(hours: 1),
+        DateTime.utc(2026, 9, 6),
+        latitude: 82.50,
+        longitude: -62.35,
+        utcOffset: const Duration(hours: -5),
       );
-      expect(times.fajr, DateTime.utc(2025, 5, 16, 22, 54));
+      expect(times.fajr, DateTime.utc(2026, 9, 6, 4, 22));
       expect(times.fajr.isBefore(times.dhuhr), isTrue);
     });
   });
