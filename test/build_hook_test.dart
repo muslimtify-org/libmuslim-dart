@@ -71,15 +71,24 @@ void main() {
     // no longer on disk. That is not hypothetical: it is what a header sync
     // looks like, and it is why this asserts on the hook's own output rather
     // than on a rebuild happening.
+    // Abi.current() renders as os_arch, e.g. linux_x64 or macos_arm64, which
+    // is exactly the pair the hook input wants. Building for the host is the
+    // point: this asserts on what the hook declares, so cross-compiling would
+    // only add toolchain failures unrelated to the dependency set.
     final abi = Abi.current().toString().split('_');
+    final targetOS = abi.first;
     final result = runHook({
       'build_asset_types': ['code_assets/code'],
       'linking_enabled': false,
       'extensions': {
         'code_assets': {
-          'target_os': abi.first,
+          'target_os': targetOS,
           'target_architecture': abi.last,
           'link_mode_preference': 'dynamic',
+          // Clang needs a deployment target on macOS, and CBuilder reads it
+          // from here. Absent it the run dies with "Cannot access macOSConfig",
+          // which reads as a target mismatch and is really a missing key.
+          if (targetOS == 'macos') 'macos': {'target_version': 13},
         },
       },
     });
