@@ -23,7 +23,7 @@ Either command adds the dependency to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  libmuslim: ^0.1.0
+  libmuslim: ^0.1.1
 ```
 
 Then import the module you want. There is no separate initialisation step:

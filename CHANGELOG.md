@@ -1,3 +1,51 @@
+## 0.1.1
+
+### Vendored header
+
+Synced to `prayertimes.h` `v0.2.3`, libmuslim releases
+[2026.08.21](https://github.com/muslimtify-org/libmuslim/releases/tag/2026.08.21)
+and
+[2026.08.22](https://github.com/muslimtify-org/libmuslim/releases/tag/2026.08.22).
+No API change: every type and member in this package is unchanged, and code
+written against `0.1.0` compiles against this release.
+
+`refine_event` is gone
+([libmuslim#85](https://github.com/muslimtify-org/libmuslim/pull/85), closing
+[libmuslim#79](https://github.com/muslimtify-org/libmuslim/issues/79)). Fajr,
+isha, sunrise and sunset are now solved the same way, by bisecting true solar
+altitude between local noon and local midnight, so whether an event exists is
+decided at the event rather than at 0h UT. The twilight grazing residual that
+motivated the change is gone with it: the worst angular error over the flagged
+points falls from 30.1964 arcmin to 0.1970.
+
+**Times move at high latitude, and what you see depends on the method.**
+Measured directly against the `2026.08.21` header over latitude -70 to 70 in
+steps of 5, longitude 0, every day of 2026, all five prayers, 52925 values:
+
+| | MWL | Kemenag |
+| --- | --- | --- |
+| values changing the displayed minute | 14 | 13 |
+| prayers becoming unavailable | 0 | 3 |
+
+Every changed value is a day on which the twilight event does not exist and the
+old solver reported a crossing near midnight anyway. Under a method that
+publishes a high-latitude rule, MWL and Moonsighting, the substitution now runs
+instead, which moves isha by up to 1 hour 54 minutes and never removes a time.
+Under the other 20 methods there is no rule to fall back on, so
+`PrayerTimesUnavailable` is thrown where `0.1.0` returned a wrong time. On this
+grid that is latitude 70 on 2026-05-16, where Kemenag now reports
+`[Prayer.fajr, Prayer.maghrib, Prayer.isha]` as unavailable and `0.1.0`
+returned 00:07, 23:33 and 23:49.
+
+Every other value on the grid moves by at most 0.0003 seconds, far below the
+whole-minute resolution this package returns.
+
+Existence was then checked upstream against JPL DE440 over the same grid, 42340
+decisions across sunrise, sunset, fajr and isha. Two disagree, both a single
+day at latitude -70 in November where the low precision solar model and DE440
+differ by 0.0035 degrees on a 0.0013 degree margin. That is the sun model's own
+noise rather than the solver's.
+
 ## 0.1.0
 
 First published release. Versions `0.0.1` and the entries previously filed

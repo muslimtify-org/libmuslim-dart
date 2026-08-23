@@ -1,6 +1,6 @@
 name: libmuslim
 description: "Dart FFI bindings for libmuslim: prayer times and other tools for Muslim applications."
-version: 0.1.0
+version: 0.1.1
 repository: https://github.com/muslimtify-org/libmuslim-dart
 issue_tracker: https://github.com/muslimtify-org/libmuslim-dart/issues
 
