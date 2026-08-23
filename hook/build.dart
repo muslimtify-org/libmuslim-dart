@@ -21,6 +21,13 @@ void main(List<String> args) async {
       name: packageName,
       assetName: '${packageName}_bindings_generated.dart',
       sources: ['src/prayertimes.c', 'src/abi_probe.c'],
+      // Both sources are shims: src/prayertimes.c is two lines that #include
+      // the header holding every line of the implementation. Without this,
+      // output.dependencies names only the shims, so editing prayertimes.h
+      // leaves the cached library in place and the suite tests the old code.
+      // CBuilder lists each include directory recursively into the dependency
+      // set, so the header is covered and so is anything vendored beside it.
+      includes: ['src'],
       // _Static_assert in abi_probe.c needs an explicit C11 baseline rather
       // than whatever the host compiler defaults to.
       std: 'c11',

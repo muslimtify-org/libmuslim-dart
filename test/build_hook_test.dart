@@ -2,6 +2,7 @@
 library;
 
 import 'dart:convert';
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:test/test.dart';
@@ -21,12 +22,14 @@ void main() {
 
   ProcessResult runHook(Map<String, Object?> config) {
     final shared = Directory('${work.path}/shared')..createSync();
+    final out = Directory('${work.path}/out')..createSync();
     final outFile = '${work.path}/output.json';
     final input = File('${work.path}/input.json')
       ..writeAsStringSync(
         jsonEncode({
           'assets': <String, Object?>{},
           'config': config,
+          'out_dir': '${out.path}/',
           'out_dir_shared': '${shared.path}/',
           'out_file': outFile,
           'package_name': 'libmuslim',
@@ -58,5 +61,55 @@ void main() {
       reason: 'hook failed:\n${result.stdout}\n${result.stderr}',
     );
     expect(File('${work.path}/output.json').existsSync(), isTrue);
+  });
+
+  test('declares the vendored header as a dependency', () {
+    // src/prayertimes.c is two lines that #include the header holding every
+    // line of the implementation, so a dependency set naming only the sources
+    // watches files that can never change. Editing prayertimes.h then leaves
+    // the cached library in place, and the suite passes against code that is
+    // no longer on disk. That is not hypothetical: it is what a header sync
+    // looks like, and it is why this asserts on the hook's own output rather
+    // than on a rebuild happening.
+    // Abi.current() renders as os_arch, e.g. linux_x64 or macos_arm64, which
+    // is exactly the pair the hook input wants. Building for the host is the
+    // point: this asserts on what the hook declares, so cross-compiling would
+    // only add toolchain failures unrelated to the dependency set.
+    final abi = Abi.current().toString().split('_');
+    final targetOS = abi.first;
+    final result = runHook({
+      'build_asset_types': ['code_assets/code'],
+      'linking_enabled': false,
+      'extensions': {
+        'code_assets': {
+          'target_os': targetOS,
+          'target_architecture': abi.last,
+          'link_mode_preference': 'dynamic',
+          // Clang needs a deployment target on macOS, and CBuilder reads it
+          // from here. Absent it the run dies with "Cannot access macOSConfig",
+          // which reads as a target mismatch and is really a missing key.
+          if (targetOS == 'macos') 'macos': {'target_version': 13},
+        },
+      },
+    });
+
+    expect(
+      result.exitCode,
+      0,
+      reason: 'hook failed:\n${result.stdout}\n${result.stderr}',
+    );
+
+    final output =
+        jsonDecode(File('${work.path}/output.json').readAsStringSync())
+            as Map<String, Object?>;
+    final dependencies = (output['dependencies'] as List).cast<String>();
+
+    expect(
+      dependencies,
+      contains(endsWith('src/prayertimes.h')),
+      reason:
+          'the header is not watched, so a sync cannot invalidate the '
+          'cached library:\n${dependencies.join('\n')}',
+    );
   });
 }
