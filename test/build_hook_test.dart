@@ -38,7 +38,7 @@ void main() {
         }),
       );
 
-    return Process.runSync(Platform.resolvedExecutable, [
+    return Process.runSync(_dartExecutable(), [
       'run',
       'hook/build.dart',
       '--config=${input.path}',
@@ -112,4 +112,25 @@ void main() {
           'cached library:\n${dependencies.join('\n')}',
     );
   });
+}
+
+/// The `dart` binary to run the hook with.
+///
+/// Under `dart test` that is the running executable. Under `flutter test` the
+/// running executable is `flutter_tester`, which has no `run` command, so the
+/// hook would never start. The flutter tool exports FLUTTER_ROOT, and the SDK
+/// ships `dart` in its `bin` directory.
+String _dartExecutable() {
+  final self = Platform.resolvedExecutable;
+  final name = self.split(Platform.pathSeparator).last;
+  if (name == 'dart' || name == 'dart.exe') return self;
+  final flutterRoot = Platform.environment['FLUTTER_ROOT'];
+  if (flutterRoot != null) {
+    return [
+      flutterRoot,
+      'bin',
+      Platform.isWindows ? 'dart.bat' : 'dart',
+    ].join(Platform.pathSeparator);
+  }
+  return 'dart';
 }

@@ -107,18 +107,17 @@ for (final prayer in Prayer.values) {
 ### What is next
 
 ```dart
-times.current();        // Prayer.fajr, the window we are in, or null before Fajr
 times.next();           // Prayer.dhuhr, or null once Isha has passed
 times.timeUntilNext();  // 0:33:30.036154, or null once Isha has passed
 ```
 
-All three take an optional instant, so they are testable without waiting:
+Both take an optional instant, so they are testable without waiting:
 
 ```dart
 times.next(DateTime.utc(2026, 8, 20, 9));  // Prayer.maghrib
 ```
 
-Each object holds one civil day. `current` and `next` return null past Isha
+Each object holds one civil day. `next` returns null past Isha
 rather than reaching into tomorrow; build the next day's object for that.
 
 ### A specific date
@@ -245,7 +244,7 @@ four are supported by the build hook rather than verified on hardware.
 
 | Type | Purpose |
 | ---- | ------- |
-| `PrayerTimes` | One civil day at one location. `today`, `forDate`, `timeOf`, `current`, `next`, `timeUntilNext` |
+| `PrayerTimes` | One civil day at one location. `today`, `forDate`, `timeOf`, `next`, `timeUntilNext` |
 | `Prayer` | The five prescribed prayers: `fajr`, `dhuhr`, `asr`, `maghrib`, `isha` |
 | `CalculationMethod` | 21 published methods, each with `key` and `displayName` |
 | `CalculationParameters` | `of` for a published method, `custom` for your own |
