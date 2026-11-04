@@ -30,3 +30,6 @@ migrate_working_dir/
 /build/
 /coverage/
 docs/
+
+# FVM Version Cache
+.fvm/
