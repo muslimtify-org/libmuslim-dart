@@ -163,19 +163,6 @@ final class PrayerTimes {
     Prayer.isha => isha,
   };
 
-  /// The prayer whose window [at] falls in, or null before Fajr.
-  ///
-  /// Null after Isha as well — these are one day's times, and the answer past
-  /// Isha belongs to the next day's object.
-  Prayer? current([DateTime? at]) {
-    final instant = (at ?? DateTime.now()).toUtc();
-    Prayer? found;
-    for (final prayer in Prayer.values) {
-      if (!timeOf(prayer).isAfter(instant)) found = prayer;
-    }
-    return found;
-  }
-
   /// The next prayer after [at], or null once Isha has passed.
   Prayer? next([DateTime? at]) {
     final instant = (at ?? DateTime.now()).toUtc();

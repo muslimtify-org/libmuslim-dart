@@ -54,19 +54,14 @@ void main() {
     expect(times.timeOf(Prayer.isha), times.isha);
   });
 
-  test('current and next report the surrounding window', () {
+  test('next is the first prayer still ahead', () {
     final times = _jakarta();
     final betweenFajrAndDhuhr = times.fajr.add(const Duration(minutes: 1));
-    expect(times.current(betweenFajrAndDhuhr), Prayer.fajr);
     expect(times.next(betweenFajrAndDhuhr), Prayer.dhuhr);
   });
 
-  test('current is null before fajr and next is null after isha', () {
+  test('next is null after isha', () {
     final times = _jakarta();
-    expect(
-      times.current(times.fajr.subtract(const Duration(minutes: 1))),
-      isNull,
-    );
     expect(times.next(times.isha.add(const Duration(minutes: 1))), isNull);
     expect(
       times.timeUntilNext(times.isha.add(const Duration(minutes: 1))),
