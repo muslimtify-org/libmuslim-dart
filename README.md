@@ -295,5 +295,4 @@ cd example && flutter test
 
 ## License
 
-MIT. The vendored `src/prayertimes.h` is MIT as well, copyright
-2025-2026 muslimtify-org. See [LICENSE](LICENSE).
+Licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
